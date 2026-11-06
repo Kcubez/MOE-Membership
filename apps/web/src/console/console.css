@@ -2305,3 +2305,11 @@ html[lang='my'] .c-table {
     padding: 20px;
   }
 }
+.console-ui .c-toast {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 100;
+  width: min(28rem, calc(100vw - 2rem));
+  box-shadow: 0 8px 28px rgb(15 23 42 / 14%);
+}

@@ -3,7 +3,7 @@
   "info": {
     "title": "MOE Shared API",
     "version": "0.11.1",
-    "description": "Shared member API. Phone/password authentication without OTP. Membership features follow separately."
+    "description": "Shared React and Flutter API. Phone/password authentication without OTP; profiles, personal QR, memberships, sessions, check-ins, attendance history and Admin corrections. Native clients use X-MOE-Client: mobile and Bearer sessions; browser clients use trusted-origin HttpOnly cookies. Reports/export remain pending."
   },
   "servers": [
     {
@@ -551,13 +551,7 @@
               "schema": {
                 "type": "object",
                 "additionalProperties": false,
-                "required": [
-                  "name",
-                  "phone",
-                  "temporaryPassword",
-                  "role",
-                  "reason"
-                ],
+                "required": ["name", "phone", "temporaryPassword", "role"],
                 "properties": {
                   "name": {
                     "type": "string",
@@ -576,11 +570,6 @@
                   "role": {
                     "type": "string",
                     "enum": ["member", "staff"]
-                  },
-                  "reason": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 500
                   }
                 }
               }

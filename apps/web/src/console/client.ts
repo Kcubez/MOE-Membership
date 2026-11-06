@@ -167,7 +167,6 @@ export const consoleApi = {
     phone: string;
     temporaryPassword: string;
     role: 'member' | 'staff';
-    reason: string;
   }) =>
     call<{ user: Account; created: boolean }>('/admin/users', {
       method: 'POST',

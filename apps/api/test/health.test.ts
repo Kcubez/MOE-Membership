@@ -7,6 +7,17 @@ test('public liveness response and explicit CORS policy', async () => {
   const { app } = await createApp();
   await app.init();
   try {
+    const docs = await request(app.getHttpServer()).get('/docs').expect(200);
+    assert.match(docs.text, /swagger-ui/);
+    await request(app.getHttpServer())
+      .get('/docs/swagger-ui-bundle.js')
+      .expect(200);
+    const spec = await request(app.getHttpServer())
+      .get('/docs/openapi.json')
+      .expect(200);
+    assert.ok(spec.body.paths['/api/v1/auth/login']);
+    assert.ok(spec.body.paths['/api/v1/members/me/qr']);
+    assert.deepEqual(spec.body.servers, [{ url: '/' }]);
     const response = await request(app.getHttpServer())
       .get('/api/v1/health')
       .set('Origin', 'http://localhost:5173')

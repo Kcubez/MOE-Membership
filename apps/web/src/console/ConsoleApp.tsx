@@ -162,6 +162,11 @@ function Console({
   );
   const [menu, setMenu] = useState(false);
   const [notice, setNotice] = useState<{ text: string; success: boolean }>();
+  useEffect(() => {
+    if (!notice?.success) return;
+    const timer = window.setTimeout(() => setNotice(undefined), 6000);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
   const [revision, setRevision] = useState(0);
   const [logoutBusy, setLogoutBusy] = useState(false);
   const sidebar = useRef<HTMLElement>(null);
@@ -519,7 +524,7 @@ function Console({
         </header>
         <main id="main-content" className="c-main">
           {notice && (
-            <div className="c-notice">
+            <div className="c-notice c-toast" role="status" aria-live="polite">
               <Alert success={notice.success}>{t(notice.text)}</Alert>
               <button
                 className="c-icon-button"
@@ -667,7 +672,7 @@ function SignIn({
     <section className="c-auth-card">
       <Brand />
       <p className="c-eyebrow">MOE MEMBERSHIP SYSTEM</p>
-      <h1>{t('Console sign in')}</h1>
+      <h1>{t('Sign in')}</h1>
       <p className="c-subtitle">
         {t('Sign in with your phone number and password.')}
       </p>
@@ -709,12 +714,10 @@ function SignIn({
       </form>
       <p className="c-auth-note">
         <LockClosedIcon />
-        {t(
-          'For MOE administrators and staff. Contact your administrator if you need access.',
-        )}
+        {t('Members, administrators and staff can sign in here.')}
       </p>
       <p className="c-auth-note">
-        {t('Members can create an account here or use the MOE member app.')}
+        {t('New to MOE? Create a member account to get started.')}
       </p>
       <a className="c-member-link" href="/signup">
         {t('Create member account')} <ArrowRightIcon />

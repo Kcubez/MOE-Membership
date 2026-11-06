@@ -398,7 +398,6 @@ function AccountDialog({
           phone: String(form.get('phone') || '').trim(),
           temporaryPassword: String(form.get('password') || ''),
           role,
-          reason,
         });
         onDone(
           result.created
@@ -516,17 +515,19 @@ function AccountDialog({
             </small>
           </label>
         )}
-        <label>
-          {t('Reason')}
-          <textarea
-            name="reason"
-            required
-            minLength={1}
-            maxLength={500}
-            rows={3}
-            placeholder={t('Why are you making this change?')}
-          />
-        </label>
+        {action.kind !== 'create' && (
+          <label>
+            {t('Reason')}
+            <textarea
+              name="reason"
+              required
+              minLength={1}
+              maxLength={500}
+              rows={3}
+              placeholder={t('Why are you making this change?')}
+            />
+          </label>
+        )}
         {action.kind === 'reset' && (
           <label className="c-checkbox">
             <input type="checkbox" name="verified" required />

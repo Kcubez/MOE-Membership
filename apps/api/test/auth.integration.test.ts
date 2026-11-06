@@ -317,7 +317,6 @@ test(
         phone: '09791234561',
         temporaryPassword: 'temporary-member-123',
         role: 'member',
-        reason: 'Member requested account',
       };
       const created = await write(
         'post',

@@ -120,7 +120,6 @@ export class AccountsService {
       phone: string;
       temporaryPassword: string;
       role: 'member' | 'staff';
-      reason: string;
     },
   ) {
     await this.limit(actor.id);
@@ -171,7 +170,7 @@ export class AccountsService {
             actorId: actor.id,
             targetId: id,
             action: 'account.created',
-            reason: input.reason,
+            reason: 'Admin created account',
             after: {
               role: input.role,
               enabled: true,

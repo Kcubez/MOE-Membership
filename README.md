@@ -16,6 +16,8 @@ Step 1 foundation implemented: React/Vite development preview, NestJS public liv
 
 ## Documentation
 
+- [Flutter API quick start](docs/flutter-quick-start.md)
+- API browser documentation: `/docs` on the API host; raw specification: `/docs/openapi.json`. Deploy the documentation change before using these hosted URLs. Interactive production writes are disabled in Swagger UI.
 - [Agent instructions](AGENTS.md)
 - [Requirements](docs/requirements.md)
 - [Architecture](docs/architecture.md)

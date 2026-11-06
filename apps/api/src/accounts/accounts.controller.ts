@@ -104,7 +104,6 @@ export class AdminUsersController {
           phone: z.string().max(40),
           temporaryPassword: password,
           role: z.enum(['member', 'staff']),
-          reason,
         })
         .strict(),
       body,

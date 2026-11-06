@@ -311,6 +311,10 @@ const my: Record<string, string> = {
   Settings: 'ဆက်တင်များ',
   'Sign out': 'ထွက်မည်',
   'Sign in': 'အကောင့်ဝင်မည်',
+  'Members, administrators and staff can sign in here.':
+    'အသင်းဝင်များ၊ စီမံခန့်ခွဲသူများနှင့် ဝန်ထမ်းများ ဤနေရာမှ အကောင့်ဝင်နိုင်ပါသည်။',
+  'New to MOE? Create a member account to get started.':
+    'MOE တွင် အကောင့်မရှိသေးပါက အသင်းဝင်အကောင့် ဖွင့်နိုင်ပါသည်။',
   'Console sign in': 'စီမံခန့်ခွဲရန် ဝင်မည်',
   'Phone number': 'ဖုန်းနံပါတ်',
   Password: 'စကားဝှက်',
