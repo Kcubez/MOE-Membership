@@ -1,0 +1,331 @@
+{
+  "info": {
+    "name": "MOE Attendance Cancellation",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Cancels real attendance and restores a visit once. Use only isolated development attendance. Configure attendanceId and test account credentials. Retries address the same immutable attendance ID; no requestId required."
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{adminToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000"
+    },
+    {
+      "key": "adminPhone",
+      "value": ""
+    },
+    {
+      "key": "adminPassword",
+      "value": ""
+    },
+    {
+      "key": "memberPhone",
+      "value": ""
+    },
+    {
+      "key": "memberPassword",
+      "value": ""
+    },
+    {
+      "key": "sessionId",
+      "value": ""
+    },
+    {
+      "key": "adminToken",
+      "value": ""
+    },
+    {
+      "key": "memberToken",
+      "value": ""
+    },
+    {
+      "key": "attendanceId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Admin sign in",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/auth/login",
+        "header": [
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "noauth"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phone\": \"{{adminPhone}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected status\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code===200)pm.variables.set(\"adminToken\",pm.response.json().token);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Member sign in",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/auth/login",
+        "header": [
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "noauth"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phone\": \"{{memberPhone}}\",\n  \"password\": \"{{memberPassword}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected status\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code===200)pm.variables.set(\"memberToken\",pm.response.json().token);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cancel attendance",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/admin/attendance/{{attendanceId}}/cancel",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reason\": \"Incorrect person recorded\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected status\",()=>pm.response.to.have.status(200));",
+              "pm.test(\"Confirmed cancellation\",()=>{const b=pm.response.json();pm.expect(b.outcome).to.be.oneOf([\"CANCELLED\",\"ALREADY_CANCELLED\"]);pm.expect(b.refundApplied).to.eql(b.outcome===\"CANCELLED\");pm.expect(b.cancellation.reason).to.be.a(\"string\");});",
+              "if(pm.response.code===200){const b=pm.response.json();pm.variables.set(\"originalCancellation\",JSON.stringify(b.cancellation));pm.variables.set(\"cancelledUsed\",b.membership.usedVisits);}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Retry cancellation",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/admin/attendance/{{attendanceId}}/cancel",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reason\": \"Incorrect person recorded\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected status\",()=>pm.response.to.have.status(200));",
+              "pm.test(\"Refund is not repeated\",()=>{const b=pm.response.json();pm.expect(b.outcome).to.eql(\"ALREADY_CANCELLED\");pm.expect(b.refundApplied).to.eql(false);pm.expect(JSON.stringify(b.cancellation)).to.eql(pm.variables.get(\"originalCancellation\"));pm.expect(b.membership.usedVisits).to.eql(pm.variables.get(\"cancelledUsed\"));});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Repeat with another reason",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/admin/attendance/{{attendanceId}}/cancel",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reason\": \"Do not overwrite original reason\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected status\",()=>pm.response.to.have.status(200));",
+              "pm.test(\"Refund is not repeated\",()=>{const b=pm.response.json();pm.expect(b.outcome).to.eql(\"ALREADY_CANCELLED\");pm.expect(b.refundApplied).to.eql(false);pm.expect(JSON.stringify(b.cancellation)).to.eql(pm.variables.get(\"originalCancellation\"));pm.expect(b.membership.usedVisits).to.eql(pm.variables.get(\"cancelledUsed\"));});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reject member cancellation",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/admin/attendance/{{attendanceId}}/cancel",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{memberToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reason\": \"Incorrect person recorded\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected status\",()=>pm.response.to.have.status(403));"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

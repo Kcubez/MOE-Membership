@@ -1,0 +1,7 @@
+localResources:
+  collections:
+    - ../postman/collections/health.postman_collection.json
+  specs:
+    - ../postman/specs/openapi.json
+workspace:
+  id: ''

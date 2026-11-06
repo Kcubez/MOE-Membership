@@ -1,0 +1,524 @@
+{
+  "info": {
+    "name": "MOE Account management (isolated test database)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Destructive test workflow: creates a synthetic user, changes passwords, resets, disables and re-enables it. Run only against an isolated test database. Bootstrap an Admin and change its temporary password first. Supply adminPhone/adminPassword as local secret environment values. Never export populated credentials. Separate manual password-change request is in the auth collection. Use a 2500 ms request delay for a full Runner run to respect login throttling."
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "if (!pm.variables.get('managedPhone')) { pm.variables.set('managedPhone','0979'+String(Math.floor(Math.random()*10000000)).padStart(7,'0')); for (const key of ['managedPassword','managedNewPassword','managedResetPassword']) pm.variables.set(key,pm.variables.replaceIn('{{$guid}}')); }"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Admin sign in",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phone\": \"{{adminPhone}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Admin is ready',()=>{pm.response.to.have.status(200); const b=pm.response.json();pm.expect(b.user.role).to.eql('admin');pm.expect(b.user.mustChangePassword).to.eql(false);pm.variables.set('adminToken',b.token);});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "List accounts",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/admin/users?limit=5"
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Directory contains safe fields',()=>{pm.response.to.have.status(200);for(const u of pm.response.json().items){pm.expect(u).not.to.have.property('email');pm.expect(u).not.to.have.property('password');}});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Create temporary Member",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/admin/users",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Managed API Test\",\n  \"phone\": \"{{managedPhone}}\",\n  \"temporaryPassword\": \"{{managedPassword}}\",\n  \"role\": \"member\",\n  \"reason\": \"Isolated integration test\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Temporary account created',()=>{pm.response.to.have.status(200);const b=pm.response.json();pm.expect(b.created).to.eql(true);pm.expect(b.user.mustChangePassword).to.eql(true);pm.variables.set('managedUserId',b.user.id);});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sign in with temporary password",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phone\": \"{{managedPhone}}\",\n  \"password\": \"{{managedPassword}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Temporary session',()=>{pm.response.to.have.status(200);pm.variables.set('managedToken',pm.response.json().token);});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Temporary session cannot access profile",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{managedToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/members/me"
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Password change required',()=>{pm.response.to.have.status(403);pm.expect(pm.response.json().code).to.eql('PASSWORD_CHANGE_REQUIRED');});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Change temporary password",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{managedToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/account/password",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"currentPassword\": \"{{managedPassword}}\",\n  \"newPassword\": \"{{managedNewPassword}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Change requires fresh sign in',()=>{pm.response.to.have.status(200);pm.expect(pm.response.json().signInRequired).to.eql(true);});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sign in with permanent password",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phone\": \"{{managedPhone}}\",\n  \"password\": \"{{managedNewPassword}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Permanent session',()=>{pm.response.to.have.status(200);pm.expect(pm.response.json().user.mustChangePassword).to.eql(false);pm.variables.set('managedToken',pm.response.json().token);});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Member cannot list accounts",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{managedToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/admin/users"
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Admin permission enforced',()=>pm.response.to.have.status(403));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reset after Page identity verification",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/admin/users/{{managedUserId}}/reset-password",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"temporaryPassword\": \"{{managedResetPassword}}\",\n  \"identityVerified\": true,\n  \"reason\": \"Synthetic Page identity verification\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": ["pm.test('Success',()=>pm.response.to.have.status(200));"]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reset revokes old session",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{managedToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/auth/session"
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Old session revoked',()=>pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Disable account",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/admin/users/{{managedUserId}}/access",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"enabled\": false,\n  \"role\": \"member\",\n  \"reason\": \"Disable synthetic test account\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": ["pm.test('Success',()=>pm.response.to.have.status(200));"]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Disabled user cannot sign in",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phone\": \"{{managedPhone}}\",\n  \"password\": \"{{managedResetPassword}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Disabled login rejected',()=>pm.expect([401,403]).to.include(pm.response.code));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Re-enable as Staff",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/admin/users/{{managedUserId}}/access",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"enabled\": true,\n  \"role\": \"staff\",\n  \"reason\": \"Re-enable synthetic test account as Staff\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": ["pm.test('Success',()=>pm.response.to.have.status(200));"]
+          }
+        }
+      ]
+    }
+  ]
+}

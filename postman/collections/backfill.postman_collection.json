@@ -1,0 +1,366 @@
+{
+  "info": {
+    "name": "MOE Admin Backfill",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Writes real historical attendance and consumes a visit. Run only on a development database with eligible member and historical session. Use an ISO timestamp with timezone. Operation identity is retained only during the collection run. No QR required."
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{adminToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000"
+    },
+    {
+      "key": "adminPhone",
+      "value": ""
+    },
+    {
+      "key": "adminPassword",
+      "value": ""
+    },
+    {
+      "key": "memberPhone",
+      "value": ""
+    },
+    {
+      "key": "memberPassword",
+      "value": ""
+    },
+    {
+      "key": "sessionId",
+      "value": ""
+    },
+    {
+      "key": "adminToken",
+      "value": ""
+    },
+    {
+      "key": "memberToken",
+      "value": ""
+    },
+    {
+      "key": "sessionId",
+      "value": ""
+    },
+    {
+      "key": "userId",
+      "value": ""
+    },
+    {
+      "key": "occurredAt",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Admin sign in",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/auth/login",
+        "header": [
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "noauth"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phone\": \"{{adminPhone}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected status\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code===200)pm.variables.set(\"adminToken\",pm.response.json().token);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Member sign in",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/auth/login",
+        "header": [
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "noauth"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phone\": \"{{memberPhone}}\",\n  \"password\": \"{{memberPassword}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected status\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code===200)pm.variables.set(\"memberToken\",pm.response.json().token);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Record historical attendance",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.variables.set(\"backfillRequestId\",pm.variables.replaceIn(\"{{$guid}}\"));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected status\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code===200){const b=pm.response.json();pm.variables.set(\"savedBackfillId\",b.attendanceId);pm.variables.set(\"savedBackfillUsed\",b.membership.usedVisits);}",
+              "pm.test(\"Historical result\",()=>{const b=pm.response.json();pm.expect(b.outcome).to.be.oneOf([\"CHECKED_IN\",\"ALREADY_CHECKED_IN\"]);pm.expect(Date.parse(b.checkedInAt)).to.be.at.most(Date.now());});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/admin/sessions/{{sessionId}}/attendance/backfill",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"requestId\": \"{{backfillRequestId}}\",\n  \"userId\": \"{{userId}}\",\n  \"occurredAt\": \"{{occurredAt}}\",\n  \"reason\": \"Missed scanner during network outage\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Retry identical backfill",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected status\",()=>pm.response.to.have.status(200));",
+              "pm.test(\"Same operation recovered\",()=>{const b=pm.response.json();pm.expect(b.replayed).to.eql(true);pm.expect(b.attendanceId).to.eql(pm.variables.get(\"savedBackfillId\"));pm.expect(b.membership.usedVisits).to.eql(pm.variables.get(\"savedBackfillUsed\"));});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/admin/sessions/{{sessionId}}/attendance/backfill",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"requestId\": \"{{backfillRequestId}}\",\n  \"userId\": \"{{userId}}\",\n  \"occurredAt\": \"{{occurredAt}}\",\n  \"reason\": \"Missed scanner during network outage\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Deliberate duplicate backfill",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.variables.set(\"backfillRequestId\",pm.variables.replaceIn(\"{{$guid}}\"));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected status\",()=>pm.response.to.have.status(200));",
+              "pm.test(\"Duplicate does not charge\",()=>{const b=pm.response.json();pm.expect(b.outcome).to.eql(\"ALREADY_CHECKED_IN\");pm.expect(b.attendanceId).to.eql(pm.variables.get(\"savedBackfillId\"));pm.expect(b.membership.usedVisits).to.eql(pm.variables.get(\"savedBackfillUsed\"));});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/admin/sessions/{{sessionId}}/attendance/backfill",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"requestId\": \"{{backfillRequestId}}\",\n  \"userId\": \"{{userId}}\",\n  \"occurredAt\": \"{{occurredAt}}\",\n  \"reason\": \"Missed scanner during network outage\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Reject member backfill",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.variables.set(\"backfillRequestId\",pm.variables.replaceIn(\"{{$guid}}\"));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected status\",()=>pm.response.to.have.status(403));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/admin/sessions/{{sessionId}}/attendance/backfill",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{memberToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"requestId\": \"{{backfillRequestId}}\",\n  \"userId\": \"{{userId}}\",\n  \"occurredAt\": \"{{occurredAt}}\",\n  \"reason\": \"Missed scanner during network outage\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

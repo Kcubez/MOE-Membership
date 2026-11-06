@@ -1,0 +1,344 @@
+{
+  "info": {
+    "name": "MOE Live Check-in",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Run as a collection against an isolated development database. This records real attendance and consumes a visit. Configure permanent-password Admin/Member accounts and a currently open sessionId on today in Yangon, with an eligible membership. QR content is held only in run-local variables, never exported to environments or collection variables. Do not save request/response bodies or publish runs containing QR data. Use the SAME requestId/payload after an ambiguous network error."
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{adminToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000"
+    },
+    {
+      "key": "adminPhone",
+      "value": ""
+    },
+    {
+      "key": "adminPassword",
+      "value": ""
+    },
+    {
+      "key": "memberPhone",
+      "value": ""
+    },
+    {
+      "key": "memberPassword",
+      "value": ""
+    },
+    {
+      "key": "sessionId",
+      "value": ""
+    },
+    {
+      "key": "adminToken",
+      "value": ""
+    },
+    {
+      "key": "memberToken",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Admin sign in",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/auth/login",
+        "header": [
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "noauth"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phone\": \"{{adminPhone}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected status\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code===200)pm.collectionVariables.set(\"adminToken\",pm.response.json().token);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Member sign in",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/auth/login",
+        "header": [
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "noauth"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phone\": \"{{memberPhone}}\",\n  \"password\": \"{{memberPassword}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected status\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code===200)pm.collectionVariables.set(\"memberToken\",pm.response.json().token);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Read member QR into run-local memory",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/members/me/qr",
+        "header": [
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{memberToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected status\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code===200){pm.variables.set(\"qrPayload\",pm.response.json().payload);pm.variables.set(\"requestId\",pm.variables.replaceIn(\"{{$guid}}\"));}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Check in to the selected live session",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/sessions/{{sessionId}}/check-ins",
+        "header": [
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"requestId\": \"{{requestId}}\",\n  \"qrPayload\": \"{{qrPayload}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected status\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code===200){const result=pm.response.json();pm.variables.set(\"used\",result.membership.usedVisits);pm.variables.set(\"attendanceId\",result.attendanceId);pm.test(\"Committed or existing check-in\",()=>pm.expect([\"CHECKED_IN\",\"ALREADY_CHECKED_IN\"].includes(result.outcome)).to.be.true);pm.test(\"Nonnegative remaining\",()=>pm.expect(result.membership.remainingVisits).to.be.at.least(0));}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Replay exact operation without another charge",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/sessions/{{sessionId}}/check-ins",
+        "header": [
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"requestId\": \"{{requestId}}\",\n  \"qrPayload\": \"{{qrPayload}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected status\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code===200){const result=pm.response.json();pm.test(\"Replay identified\",()=>pm.expect(result.replayed).to.be.true);pm.test(\"Same attendance\",()=>pm.expect(result.attendanceId).to.equal(pm.variables.get(\"attendanceId\")));pm.test(\"No extra visit\",()=>pm.expect(result.membership.usedVisits).to.equal(Number(pm.variables.get(\"used\"))));}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Deliberate repeat scan returns original attendance",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/sessions/{{sessionId}}/check-ins",
+        "header": [
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"requestId\": \"{{requestId}}\",\n  \"qrPayload\": \"{{qrPayload}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.variables.set(\"requestId\",pm.variables.replaceIn(\"{{$guid}}\"));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected status\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code===200){const result=pm.response.json();pm.test(\"Already checked in\",()=>pm.expect(result.outcome).to.equal(\"ALREADY_CHECKED_IN\"));pm.test(\"No extra visit\",()=>pm.expect(result.membership.usedVisits).to.equal(Number(pm.variables.get(\"used\"))));}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reject invalid QR without attendance",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/sessions/{{sessionId}}/check-ins",
+        "header": [
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"requestId\": \"{{requestId}}\",\n  \"qrPayload\": \"invalid-qr\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.variables.set(\"requestId\",pm.variables.replaceIn(\"{{$guid}}\"));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected status\",()=>pm.response.to.have.status(409));",
+              "pm.test(\"Invalid QR\",()=>pm.expect(pm.response.json().code).to.equal(\"INVALID_QR\"));"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

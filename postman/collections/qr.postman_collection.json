@@ -1,0 +1,469 @@
+{
+  "info": {
+    "name": "MOE Personal QR",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Use an isolated development database: this rotates the selected member QR and logs out the member test session. Set two existing permanent-password accounts locally. No QR payload is saved in variables, request URLs or scripts. Do not save response bodies or publish run details containing QR data."
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{adminToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000"
+    },
+    {
+      "key": "adminPhone",
+      "value": ""
+    },
+    {
+      "key": "adminPassword",
+      "value": ""
+    },
+    {
+      "key": "memberPhone",
+      "value": ""
+    },
+    {
+      "key": "memberPassword",
+      "value": ""
+    },
+    {
+      "key": "adminToken",
+      "value": ""
+    },
+    {
+      "key": "memberToken",
+      "value": ""
+    },
+    {
+      "key": "memberId",
+      "value": ""
+    },
+    {
+      "key": "qrVersion",
+      "value": "1"
+    },
+    {
+      "key": "oldQrVersion",
+      "value": "1"
+    }
+  ],
+  "item": [
+    {
+      "name": "Admin sign in",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/auth/login",
+        "auth": {
+          "type": "noauth"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phone\": \"{{adminPhone}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected HTTP status\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code===200) pm.collectionVariables.set(\"adminToken\",pm.response.json().token);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Member sign in",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/auth/login",
+        "auth": {
+          "type": "noauth"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phone\": \"{{memberPhone}}\",\n  \"password\": \"{{memberPassword}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected HTTP status\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code===200){const data=pm.response.json();pm.collectionVariables.set(\"memberToken\",data.token);pm.collectionVariables.set(\"memberId\",data.user.id);}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Read own personal QR",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/members/me/qr",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{memberToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected HTTP status\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code===200){const data=pm.response.json();pm.test(\"Private, non-cacheable QR\",()=>pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));pm.test(\"Opaque QR format\",()=>pm.expect(/^moe:member:v1:[0-9a-f-]{36}:[A-Za-z0-9_-]{43}$/.test(data.payload)).to.be.true);pm.test(\"No phone in QR response\",()=>pm.expect(\"phone\" in data).to.be.false);}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Read member QR metadata",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/admin/users/{{memberId}}/qr"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected HTTP status\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code===200){const data=pm.response.json();pm.collectionVariables.set(\"qrVersion\",data.version);pm.collectionVariables.set(\"oldQrVersion\",data.version);pm.test(\"Metadata has no QR material\",()=>pm.expect(\"payload\" in data || \"credentialId\" in data).to.be.false);}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Regenerate member QR",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/admin/users/{{memberId}}/qr/regenerate",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"version\": {{qrVersion}},\n  \"reason\": \"Manual QR replacement test\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected HTTP status\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code===200){const data=pm.response.json();pm.collectionVariables.set(\"qrVersion\",data.version);pm.test(\"Version increased\",()=>pm.expect(data.version).to.equal(Number(pm.collectionVariables.get(\"oldQrVersion\"))+1));}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Member sees current QR version",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/members/me/qr",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{memberToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected HTTP status\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code===200){const data=pm.response.json();pm.test(\"Private, non-cacheable QR\",()=>pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));pm.test(\"Opaque QR format\",()=>pm.expect(/^moe:member:v1:[0-9a-f-]{36}:[A-Za-z0-9_-]{43}$/.test(data.payload)).to.be.true);pm.test(\"No phone in QR response\",()=>pm.expect(\"phone\" in data).to.be.false);}",
+              "if(pm.response.code===200)pm.test(\"Current QR version\",()=>pm.expect(pm.response.json().version).to.equal(Number(pm.collectionVariables.get(\"qrVersion\"))));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reject stale regeneration",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/admin/users/{{memberId}}/qr/regenerate",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"version\": {{oldQrVersion}},\n  \"reason\": \"Stale retry must not rotate again\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected HTTP status\", () => pm.response.to.have.status(409));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Read regeneration audit",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/admin/users/{{memberId}}/qr/audit"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected HTTP status\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code===200)pm.test(\"Audit omits QR material\",()=>pm.expect(pm.response.text().includes(\"moe:member:v1:\") || pm.response.text().includes(\"credentialId\")).to.be.false);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Member cannot inspect Admin QR metadata",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/admin/users/{{memberId}}/qr",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{memberToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected HTTP status\", () => pm.response.to.have.status(403));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Member logout",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/auth/logout",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{memberToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected HTTP status\", () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Revoked session cannot read QR",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/members/me/qr",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{memberToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Expected HTTP status\", () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

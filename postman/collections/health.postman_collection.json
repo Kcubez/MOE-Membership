@@ -1,0 +1,32 @@
+{
+  "info": {
+    "name": "MOE API Foundation",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    }
+  ],
+  "item": [
+    {
+      "name": "API liveness",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/health"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Liveness is successful', () => { pm.response.to.have.status(200); pm.expect(pm.response.json()).to.eql({status: 'ok', service: 'moe-api'}); });"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

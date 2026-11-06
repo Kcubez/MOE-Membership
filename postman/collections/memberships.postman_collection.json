@@ -1,0 +1,376 @@
+{
+  "info": {
+    "name": "MOE Plans and Memberships",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Writes real data. Use a development database. Set Admin credentials locally, choose an existing enabled memberId, and explicitly supply all dates. Renewal dates must not overlap. Re-import with Replace to update. Do not commit credentials or tokens. Assignment/renewal recipients must currently have Member role; Admin and Staff IDs return INVALID_MEMBER_ROLE."
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000"
+    },
+    {
+      "key": "adminPhone",
+      "value": ""
+    },
+    {
+      "key": "adminPassword",
+      "value": ""
+    },
+    {
+      "key": "authToken",
+      "value": ""
+    },
+    {
+      "key": "memberId",
+      "value": ""
+    },
+    {
+      "key": "planId",
+      "value": ""
+    },
+    {
+      "key": "planVersion",
+      "value": "1"
+    },
+    {
+      "key": "membershipId",
+      "value": ""
+    },
+    {
+      "key": "membershipVersion",
+      "value": "1"
+    },
+    {
+      "key": "startDate",
+      "value": ""
+    },
+    {
+      "key": "endDate",
+      "value": ""
+    },
+    {
+      "key": "renewStartDate",
+      "value": ""
+    },
+    {
+      "key": "renewEndDate",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Admin sign in",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phone\": \"{{adminPhone}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "auth": {
+          "type": "noauth"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) { const data = pm.response.json(); pm.collectionVariables.set(\"authToken\", data.token); }"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Create plan",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/admin/plans",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Postman test plan\",\n  \"description\": \"Manual test\",\n  \"benefits\": \"Meetups\",\n  \"totalVisits\": 10,\n  \"reason\": \"Test plan creation\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) { const data = pm.response.json(); pm.collectionVariables.set(\"planId\",data.id); pm.collectionVariables.set(\"planVersion\",data.version); }"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "List plans",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/admin/plans?limit=20"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Assign membership \u2014 enter dates first",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/admin/memberships",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": \"{{memberId}}\",\n  \"planId\": \"{{planId}}\",\n  \"planVersion\": {{planVersion}},\n  \"startDate\": \"{{startDate}}\",\n  \"endDate\": \"{{endDate}}\",\n  \"reason\": \"Manual membership assignment\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) { const data = pm.response.json(); pm.collectionVariables.set(\"membershipId\",data.id); pm.collectionVariables.set(\"membershipVersion\",data.version); }"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "List memberships",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/admin/memberships?limit=15"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Read membership",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/admin/memberships/{{membershipId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Renew \u2014 explicitly enter new dates",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/admin/memberships/{{membershipId}}/renew",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"startDate\": \"{{renewStartDate}}\",\n  \"endDate\": \"{{renewEndDate}}\",\n  \"planVersion\": {{planVersion}},\n  \"reason\": \"Manual renewal\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Membership audit",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/admin/memberships/{{membershipId}}/audit"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cancel membership",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-MOE-Client",
+            "value": "mobile"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/admin/memberships/{{membershipId}}/cancel",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"version\": {{membershipVersion}},\n  \"reason\": \"Manual cancellation\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

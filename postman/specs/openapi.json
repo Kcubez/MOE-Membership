@@ -1,0 +1,5290 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "MOE Shared API",
+    "version": "0.11.1",
+    "description": "Shared member API. Phone/password authentication without OTP. Membership features follow separately."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000"
+    }
+  ],
+  "paths": {
+    "/api/v1/health": {
+      "get": {
+        "operationId": "getHealth",
+        "summary": "Public API process liveness",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "API process is responding; does not check PostgreSQL.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["status", "service"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": ["ok"]
+                    },
+                    "service": {
+                      "type": "string",
+                      "enum": ["moe-api"]
+                    }
+                  }
+                },
+                "example": {
+                  "status": "ok",
+                  "service": "moe-api"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/signup": {
+      "post": {
+        "summary": "Create a member and sign in; no OTP or membership granted",
+        "operationId": "signupAuth",
+        "description": "Web uses HttpOnly cookies and must send a trusted Origin on writes. Flutter sends X-MOE-Client: mobile on writes and Authorization: Bearer <token> after login. Mobile signup/login returns token; web never returns it in JSON. No raw Better Auth routes are public. Phone is normalized to +95.",
+        "responses": {
+          "200": {
+            "description": "Success; identity is returned for signup/login/session, success=true for logout. Signup/login mobile response also includes token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthIdentity"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Invalid credentials or session"
+          },
+          "403": {
+            "description": "Untrusted origin or account disabled"
+          },
+          "429": {
+            "description": "Too many requests"
+          },
+          "503": {
+            "description": "Auth is not configured or unavailable"
+          }
+        },
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-MOE-Client",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["mobile"]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Signup"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "summary": "Sign in with Myanmar phone/password",
+        "operationId": "loginAuth",
+        "description": "Web uses HttpOnly cookies and must send a trusted Origin on writes. Flutter sends X-MOE-Client: mobile on writes and Authorization: Bearer <token> after login. Mobile signup/login returns token; web never returns it in JSON. No raw Better Auth routes are public. Phone is normalized to +95.",
+        "responses": {
+          "200": {
+            "description": "Success; identity is returned for signup/login/session, success=true for logout. Signup/login mobile response also includes token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthIdentity"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Invalid credentials or session"
+          },
+          "403": {
+            "description": "Untrusted origin or account disabled"
+          },
+          "429": {
+            "description": "Too many requests"
+          },
+          "503": {
+            "description": "Auth is not configured or unavailable"
+          }
+        },
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-MOE-Client",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["mobile"]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Credentials"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/session": {
+      "get": {
+        "summary": "Get current enabled account",
+        "operationId": "sessionAuth",
+        "description": "Web uses HttpOnly cookies and must send a trusted Origin on writes. Flutter sends X-MOE-Client: mobile on writes and Authorization: Bearer <token> after login. Mobile signup/login returns token; web never returns it in JSON. No raw Better Auth routes are public. Phone is normalized to +95.",
+        "responses": {
+          "200": {
+            "description": "Success; identity is returned for signup/login/session, success=true for logout. Signup/login mobile response also includes token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthIdentity"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Invalid credentials or session"
+          },
+          "403": {
+            "description": "Untrusted origin or account disabled"
+          },
+          "429": {
+            "description": "Too many requests"
+          },
+          "503": {
+            "description": "Auth is not configured or unavailable"
+          }
+        },
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-MOE-Client",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["mobile"]
+            }
+          }
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "summary": "Revoke current session",
+        "operationId": "logoutAuth",
+        "description": "Web uses HttpOnly cookies and must send a trusted Origin on writes. Flutter sends X-MOE-Client: mobile on writes and Authorization: Bearer <token> after login. Mobile signup/login returns token; web never returns it in JSON. No raw Better Auth routes are public. Phone is normalized to +95.",
+        "responses": {
+          "200": {
+            "description": "Success; identity is returned for signup/login/session, success=true for logout. Signup/login mobile response also includes token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["success"],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [true]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Invalid credentials or session"
+          },
+          "403": {
+            "description": "Untrusted origin or account disabled"
+          },
+          "429": {
+            "description": "Too many requests"
+          },
+          "503": {
+            "description": "Auth is not configured or unavailable"
+          }
+        },
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-MOE-Client",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["mobile"]
+            }
+          }
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ]
+      }
+    },
+    "/api/v1/members/me": {
+      "get": {
+        "operationId": "getMyProfile",
+        "summary": "Read own member profile",
+        "description": "Requires a live enabled-account session. Does not grant a membership. Member number is stable and independent of login identity. QR follows separately.",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Own profile only; never contains credential or session fields.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberProfile"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or revoked session"
+          },
+          "403": {
+            "description": "Disabled account or untrusted origin"
+          },
+          "503": {
+            "description": "Profile or authentication unavailable"
+          }
+        }
+      }
+    },
+    "/api/v1/account/password": {
+      "post": {
+        "summary": "Change own password",
+        "operationId": "Changeownpassword",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ],
+        "description": "Writes require trusted Origin for cookies or X-MOE-Client: mobile without cookies. Temporary-password sessions are restricted. Errors include 400 invalid input, 401 invalid/revoked session or current password, 403 role/account restriction, 404 missing target, 409 conflict, 429 rate limit, 503 unavailable. Password change revokes all sessions; sign in again.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["success", "signInRequired"],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [true]
+                    },
+                    "signInRequired": {
+                      "type": "boolean",
+                      "enum": [true]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountOperationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid session/password",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountOperationError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied or PASSWORD_CHANGE_REQUIRED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountOperationError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Target not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountOperationError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicting account state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountOperationError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountOperationError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountOperationError"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["currentPassword", "newPassword"],
+                "properties": {
+                  "currentPassword": {
+                    "type": "string",
+                    "minLength": 8,
+                    "maxLength": 128,
+                    "writeOnly": true
+                  },
+                  "newPassword": {
+                    "type": "string",
+                    "minLength": 8,
+                    "maxLength": 128,
+                    "writeOnly": true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/users": {
+      "post": {
+        "summary": "Create or reuse account",
+        "operationId": "Createorreuseaccount",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ],
+        "description": "Writes require trusted Origin for cookies or X-MOE-Client: mobile without cookies. Temporary-password sessions are restricted. Errors include 400 invalid input, 401 invalid/revoked session or current password, 403 role/account restriction, 404 missing target, 409 conflict, 429 rate limit, 503 unavailable. Password change revokes all sessions; sign in again. Returns an existing normalized-phone account unchanged instead of resetting its credentials or role.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["user", "created"],
+                  "properties": {
+                    "user": {
+                      "$ref": "#/components/schemas/AccountSummary"
+                    },
+                    "created": {
+                      "type": "boolean",
+                      "description": "False means normalized phone already exists; existing credentials and role are unchanged."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountOperationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid session/password",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountOperationError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied or PASSWORD_CHANGE_REQUIRED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountOperationError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Target not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountOperationError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicting account state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountOperationError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountOperationError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountOperationError"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "name",
+                  "phone",
+                  "temporaryPassword",
+                  "role",
+                  "reason"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "temporaryPassword": {
+                    "type": "string",
+                    "minLength": 8,
+                    "maxLength": 128,
+                    "writeOnly": true
+                  },
+                  "role": {
+                    "type": "string",
+                    "enum": ["member", "staff"]
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "listAccounts",
+        "summary": "Admin-only account directory",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 120
+            }
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["admin", "staff", "member"]
+            }
+          },
+          {
+            "name": "enabled",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["true", "false"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Safe account fields; opaque cursor for the next page.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["items", "nextCursor"],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AccountSummary"
+                      }
+                    },
+                    "nextCursor": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid session"
+          },
+          "403": {
+            "description": "Admin required"
+          }
+        }
+      }
+    },
+    "/api/v1/admin/users/{id}/reset-password": {
+      "post": {
+        "summary": "Reset password after manual identity verification",
+        "operationId": "Resetpasswordaftermanualidentityverification",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ],
+        "description": "Writes require trusted Origin for cookies or X-MOE-Client: mobile without cookies. Temporary-password sessions are restricted. Errors include 400 invalid input, 401 invalid/revoked session or current password, 403 role/account restriction, 404 missing target, 409 conflict, 429 rate limit, 503 unavailable. Password change revokes all sessions; sign in again.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["success"],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [true]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountOperationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid session/password",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountOperationError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied or PASSWORD_CHANGE_REQUIRED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountOperationError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Target not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountOperationError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicting account state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountOperationError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountOperationError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountOperationError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["temporaryPassword", "reason", "identityVerified"],
+                "properties": {
+                  "temporaryPassword": {
+                    "type": "string",
+                    "minLength": 8,
+                    "maxLength": 128,
+                    "writeOnly": true
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  },
+                  "identityVerified": {
+                    "type": "boolean",
+                    "enum": [true]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/users/{id}/access": {
+      "patch": {
+        "summary": "Change account access",
+        "operationId": "Changeaccountaccess",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ],
+        "description": "Writes require trusted Origin for cookies or X-MOE-Client: mobile without cookies. Temporary-password sessions are restricted. Errors include 400 invalid input, 401 invalid/revoked session or current password, 403 role/account restriction, 404 missing target, 409 conflict, 429 rate limit, 503 unavailable. Password change revokes all sessions; sign in again.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["user"],
+                  "properties": {
+                    "user": {
+                      "$ref": "#/components/schemas/AccountSummary"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountOperationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid session/password",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountOperationError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied or PASSWORD_CHANGE_REQUIRED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountOperationError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Target not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountOperationError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicting account state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountOperationError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountOperationError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountOperationError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["enabled", "role", "reason"],
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "role": {
+                    "type": "string",
+                    "enum": ["member", "staff"]
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/users/summary": {
+      "get": {
+        "operationId": "getAccountSummary",
+        "summary": "Admin-only live account counts",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current counts across all accounts, not just the displayed page.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "total",
+                    "enabled",
+                    "staff",
+                    "passwordChangesRequired"
+                  ],
+                  "properties": {
+                    "total": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "enabled": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "staff": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "passwordChangesRequired": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Session required"
+          },
+          "403": {
+            "description": "Admin required"
+          }
+        }
+      }
+    },
+    "/api/v1/admin/plans": {
+      "get": {
+        "summary": "List plans",
+        "operationId": "getApiV1AdminPlans",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ],
+        "description": "Admin only. Dates are YYYY-MM-DD, inclusive in Asia/Yangon. No automatic membership dates. Writes require a reason; editing uses version to reject stale updates. Cancelled periods do not block replacements. Status precedence: Cancelled > Completed > Expired > Upcoming > Active.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Plan"
+                      }
+                    },
+                    "nextCursor": {
+                      "type": ["string", "null"]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_INPUT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN or PASSWORD_CHANGE_REQUIRED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "MEMBERSHIP_OVERLAP, PLAN_CHANGED, VERSION_CONFLICT, QUOTA_BELOW_USED, PLAN_ARCHIVED or INVALID_STATE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "archived",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "post": {
+        "summary": "Create a dates-free plan",
+        "operationId": "postApiV1AdminPlans",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ],
+        "description": "Admin only. Dates are YYYY-MM-DD, inclusive in Asia/Yangon. No automatic membership dates. Writes require a reason; editing uses version to reject stale updates. Cancelled periods do not block replacements. Status precedence: Cancelled > Completed > Expired > Upcoming > Active.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Plan"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_INPUT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN or PASSWORD_CHANGE_REQUIRED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "MEMBERSHIP_OVERLAP, PLAN_CHANGED, VERSION_CONFLICT, QUOTA_BELOW_USED, PLAN_ARCHIVED or INVALID_STATE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/plans/{id}": {
+      "get": {
+        "summary": "Read plan",
+        "operationId": "getApiV1AdminPlansId",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ],
+        "description": "Admin only. Dates are YYYY-MM-DD, inclusive in Asia/Yangon. No automatic membership dates. Writes require a reason; editing uses version to reject stale updates. Cancelled periods do not block replacements. Status precedence: Cancelled > Completed > Expired > Upcoming > Active.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Plan"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_INPUT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN or PASSWORD_CHANGE_REQUIRED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "MEMBERSHIP_OVERLAP, PLAN_CHANGED, VERSION_CONFLICT, QUOTA_BELOW_USED, PLAN_ARCHIVED or INVALID_STATE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "patch": {
+        "summary": "Edit plan without changing existing memberships",
+        "operationId": "patchApiV1AdminPlansId",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ],
+        "description": "Admin only. Dates are YYYY-MM-DD, inclusive in Asia/Yangon. No automatic membership dates. Writes require a reason; editing uses version to reject stale updates. Cancelled periods do not block replacements. Status precedence: Cancelled > Completed > Expired > Upcoming > Active.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Plan"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_INPUT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN or PASSWORD_CHANGE_REQUIRED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "MEMBERSHIP_OVERLAP, PLAN_CHANGED, VERSION_CONFLICT, QUOTA_BELOW_USED, PLAN_ARCHIVED or INVALID_STATE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "name",
+                  "description",
+                  "benefits",
+                  "totalVisits",
+                  "reason",
+                  "version"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "description": {
+                    "type": "string",
+                    "maxLength": 2000
+                  },
+                  "benefits": {
+                    "type": "string",
+                    "maxLength": 4000
+                  },
+                  "totalVisits": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 2147483647
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  },
+                  "version": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/plans/{id}/availability": {
+      "patch": {
+        "summary": "Archive or restore a plan",
+        "operationId": "patchApiV1AdminPlansIdAvailability",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ],
+        "description": "Admin only. Dates are YYYY-MM-DD, inclusive in Asia/Yangon. No automatic membership dates. Writes require a reason; editing uses version to reject stale updates. Cancelled periods do not block replacements. Status precedence: Cancelled > Completed > Expired > Upcoming > Active.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Plan"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_INPUT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN or PASSWORD_CHANGE_REQUIRED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "MEMBERSHIP_OVERLAP, PLAN_CHANGED, VERSION_CONFLICT, QUOTA_BELOW_USED, PLAN_ARCHIVED or INVALID_STATE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["archived", "version", "reason"],
+                "properties": {
+                  "archived": {
+                    "type": "boolean"
+                  },
+                  "version": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/plans/{id}/audit": {
+      "get": {
+        "summary": "Read plan audit",
+        "operationId": "getApiV1AdminPlansIdAudit",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ],
+        "description": "Admin only. Dates are YYYY-MM-DD, inclusive in Asia/Yangon. No automatic membership dates. Writes require a reason; editing uses version to reject stale updates. Cancelled periods do not block replacements. Status precedence: Cancelled > Completed > Expired > Upcoming > Active.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/DomainAudit"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_INPUT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN or PASSWORD_CHANGE_REQUIRED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "MEMBERSHIP_OVERLAP, PLAN_CHANGED, VERSION_CONFLICT, QUOTA_BELOW_USED, PLAN_ARCHIVED or INVALID_STATE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/memberships": {
+      "get": {
+        "summary": "List memberships",
+        "operationId": "getApiV1AdminMemberships",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ],
+        "description": "Admin only. Dates are YYYY-MM-DD, inclusive in Asia/Yangon. No automatic membership dates. Writes require a reason; editing uses version to reject stale updates. Cancelled periods do not block replacements. Status precedence: Cancelled > Completed > Expired > Upcoming > Active.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Membership"
+                      }
+                    },
+                    "nextCursor": {
+                      "type": ["string", "null"]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_INPUT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN or PASSWORD_CHANGE_REQUIRED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "MEMBERSHIP_OVERLAP, PLAN_CHANGED, VERSION_CONFLICT, QUOTA_BELOW_USED, PLAN_ARCHIVED or INVALID_STATE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "planId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "post": {
+        "summary": "Assign membership with explicit dates",
+        "operationId": "postApiV1AdminMemberships",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ],
+        "description": "Admin only. Dates are YYYY-MM-DD, inclusive in Asia/Yangon. No automatic membership dates. Writes require a reason; editing uses version to reject stale updates. Cancelled periods do not block replacements. Status precedence: Cancelled > Completed > Expired > Upcoming > Active. Assignment/renewal is restricted to currently enabled member-role accounts. Admin and Staff targets are rejected with 409 INVALID_MEMBER_ROLE after account locking; existing history remains intact.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Membership"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_INPUT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN or PASSWORD_CHANGE_REQUIRED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "MEMBERSHIP_OVERLAP, PLAN_CHANGED, VERSION_CONFLICT, QUOTA_BELOW_USED, PLAN_ARCHIVED or INVALID_STATE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MembershipInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/memberships/{id}": {
+      "get": {
+        "summary": "Read membership",
+        "operationId": "getApiV1AdminMembershipsId",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ],
+        "description": "Admin only. Dates are YYYY-MM-DD, inclusive in Asia/Yangon. No automatic membership dates. Writes require a reason; editing uses version to reject stale updates. Cancelled periods do not block replacements. Status precedence: Cancelled > Completed > Expired > Upcoming > Active.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Membership"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_INPUT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN or PASSWORD_CHANGE_REQUIRED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "MEMBERSHIP_OVERLAP, PLAN_CHANGED, VERSION_CONFLICT, QUOTA_BELOW_USED, PLAN_ARCHIVED or INVALID_STATE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "patch": {
+        "summary": "Edit membership dates and quota",
+        "operationId": "patchApiV1AdminMembershipsId",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ],
+        "description": "Admin only. Dates are YYYY-MM-DD, inclusive in Asia/Yangon. No automatic membership dates. Writes require a reason; editing uses version to reject stale updates. Cancelled periods do not block replacements. Status precedence: Cancelled > Completed > Expired > Upcoming > Active.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Membership"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_INPUT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN or PASSWORD_CHANGE_REQUIRED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "MEMBERSHIP_OVERLAP, PLAN_CHANGED, VERSION_CONFLICT, QUOTA_BELOW_USED, PLAN_ARCHIVED or INVALID_STATE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "startDate",
+                  "endDate",
+                  "totalVisits",
+                  "version",
+                  "reason"
+                ],
+                "properties": {
+                  "startDate": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "endDate": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "totalVisits": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "version": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/memberships/{id}/renew": {
+      "post": {
+        "summary": "Create a new membership term without rollover",
+        "operationId": "postApiV1AdminMembershipsIdRenew",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ],
+        "description": "Admin only. Dates are YYYY-MM-DD, inclusive in Asia/Yangon. No automatic membership dates. Writes require a reason; editing uses version to reject stale updates. Cancelled periods do not block replacements. Status precedence: Cancelled > Completed > Expired > Upcoming > Active. Assignment/renewal is restricted to currently enabled member-role accounts. Admin and Staff targets are rejected with 409 INVALID_MEMBER_ROLE after account locking; existing history remains intact.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Membership"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_INPUT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN or PASSWORD_CHANGE_REQUIRED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "MEMBERSHIP_OVERLAP, PLAN_CHANGED, VERSION_CONFLICT, QUOTA_BELOW_USED, PLAN_ARCHIVED or INVALID_STATE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["startDate", "endDate", "planVersion", "reason"],
+                "properties": {
+                  "startDate": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "endDate": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "planVersion": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/memberships/{id}/cancel": {
+      "post": {
+        "summary": "Cancel once preserving history",
+        "operationId": "postApiV1AdminMembershipsIdCancel",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ],
+        "description": "Admin only. Dates are YYYY-MM-DD, inclusive in Asia/Yangon. No automatic membership dates. Writes require a reason; editing uses version to reject stale updates. Cancelled periods do not block replacements. Status precedence: Cancelled > Completed > Expired > Upcoming > Active.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Membership"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_INPUT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN or PASSWORD_CHANGE_REQUIRED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "MEMBERSHIP_OVERLAP, PLAN_CHANGED, VERSION_CONFLICT, QUOTA_BELOW_USED, PLAN_ARCHIVED or INVALID_STATE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["version", "reason"],
+                "properties": {
+                  "version": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/memberships/{id}/audit": {
+      "get": {
+        "summary": "Read membership audit",
+        "operationId": "getApiV1AdminMembershipsIdAudit",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ],
+        "description": "Admin only. Dates are YYYY-MM-DD, inclusive in Asia/Yangon. No automatic membership dates. Writes require a reason; editing uses version to reject stale updates. Cancelled periods do not block replacements. Status precedence: Cancelled > Completed > Expired > Upcoming > Active.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/DomainAudit"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_INPUT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN or PASSWORD_CHANGE_REQUIRED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "MEMBERSHIP_OVERLAP, PLAN_CHANGED, VERSION_CONFLICT, QUOTA_BELOW_USED, PLAN_ARCHIVED or INVALID_STATE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/members/me/memberships": {
+      "get": {
+        "summary": "Read own memberships",
+        "operationId": "getApiV1MembersMeMemberships",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ],
+        "description": "Own records only. Dates are YYYY-MM-DD, inclusive in Asia/Yangon. No automatic membership dates. Writes require a reason; editing uses version to reject stale updates. Cancelled periods do not block replacements. Status precedence: Cancelled > Completed > Expired > Upcoming > Active.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Membership"
+                      }
+                    },
+                    "nextCursor": {
+                      "type": ["string", "null"]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_INPUT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN or PASSWORD_CHANGE_REQUIRED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "MEMBERSHIP_OVERLAP, PLAN_CHANGED, VERSION_CONFLICT, QUOTA_BELOW_USED, PLAN_ARCHIVED or INVALID_STATE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/members/me/memberships/{id}": {
+      "get": {
+        "summary": "Read own membership details",
+        "operationId": "getApiV1MembersMeMembershipsId",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ],
+        "description": "Own records only. Dates are YYYY-MM-DD, inclusive in Asia/Yangon. No automatic membership dates. Writes require a reason; editing uses version to reject stale updates. Cancelled periods do not block replacements. Status precedence: Cancelled > Completed > Expired > Upcoming > Active.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Membership"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_INPUT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN or PASSWORD_CHANGE_REQUIRED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "MEMBERSHIP_OVERLAP, PLAN_CHANGED, VERSION_CONFLICT, QUOTA_BELOW_USED, PLAN_ARCHIVED or INVALID_STATE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/sessions": {
+      "get": {
+        "summary": "List visible meetup sessions",
+        "operationId": "getApiV1Sessions",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ],
+        "description": "Admin manages sessions. Staff can only read currently assigned sessions and cannot see the staff roster. Members are denied. Dates are explicit YYYY-MM-DD in Asia/Yangon. Creation rejects archived plans and assignments require enabled staff accounts. State/roster writes require current version and a reason; stale versions return VERSION_CONFLICT. No scan or attendance side effects. Name, plan and meetup date remain immutable in this increment.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/MeetupSession"
+                      }
+                    },
+                    "nextCursor": {
+                      "type": ["string", "null"]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_INPUT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN or PASSWORD_CHANGE_REQUIRED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND, including unassigned session IDs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "VERSION_CONFLICT, INVALID_STAFF or PLAN_ARCHIVED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "planId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "open",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/sessions/{id}": {
+      "get": {
+        "summary": "Read a visible meetup session",
+        "operationId": "getApiV1SessionsId",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ],
+        "description": "Admin manages sessions. Staff can only read currently assigned sessions and cannot see the staff roster. Members are denied. Dates are explicit YYYY-MM-DD in Asia/Yangon. Creation rejects archived plans and assignments require enabled staff accounts. State/roster writes require current version and a reason; stale versions return VERSION_CONFLICT. No scan or attendance side effects. Name, plan and meetup date remain immutable in this increment.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeetupSession"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_INPUT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN or PASSWORD_CHANGE_REQUIRED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND, including unassigned session IDs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "VERSION_CONFLICT, INVALID_STAFF or PLAN_ARCHIVED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/sessions": {
+      "post": {
+        "summary": "Create meetup session",
+        "operationId": "postApiV1AdminSessions",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ],
+        "description": "Admin manages sessions. Staff can only read currently assigned sessions and cannot see the staff roster. Members are denied. Dates are explicit YYYY-MM-DD in Asia/Yangon. Creation rejects archived plans and assignments require enabled staff accounts. State/roster writes require current version and a reason; stale versions return VERSION_CONFLICT. No scan or attendance side effects. Name, plan and meetup date remain immutable in this increment.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeetupSession"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_INPUT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN or PASSWORD_CHANGE_REQUIRED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND, including unassigned session IDs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "VERSION_CONFLICT, INVALID_STAFF or PLAN_ARCHIVED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionCreate"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/sessions/{id}/state": {
+      "patch": {
+        "summary": "Open or close a meetup session",
+        "operationId": "patchApiV1AdminSessionsIdState",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ],
+        "description": "Admin manages sessions. Staff can only read currently assigned sessions and cannot see the staff roster. Members are denied. Dates are explicit YYYY-MM-DD in Asia/Yangon. Creation rejects archived plans and assignments require enabled staff accounts. State/roster writes require current version and a reason; stale versions return VERSION_CONFLICT. No scan or attendance side effects. Name, plan and meetup date remain immutable in this increment.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeetupSession"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_INPUT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN or PASSWORD_CHANGE_REQUIRED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND, including unassigned session IDs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "VERSION_CONFLICT, INVALID_STAFF or PLAN_ARCHIVED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionStateChange"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/sessions/{id}/staff": {
+      "put": {
+        "summary": "Replace assigned staff atomically",
+        "operationId": "putApiV1AdminSessionsIdStaff",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ],
+        "description": "Admin manages sessions. Staff can only read currently assigned sessions and cannot see the staff roster. Members are denied. Dates are explicit YYYY-MM-DD in Asia/Yangon. Creation rejects archived plans and assignments require enabled staff accounts. State/roster writes require current version and a reason; stale versions return VERSION_CONFLICT. No scan or attendance side effects. Name, plan and meetup date remain immutable in this increment.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeetupSession"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_INPUT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN or PASSWORD_CHANGE_REQUIRED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND, including unassigned session IDs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "VERSION_CONFLICT, INVALID_STAFF or PLAN_ARCHIVED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionStaffChange"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/sessions/{id}/audit": {
+      "get": {
+        "summary": "Read meetup session audit history",
+        "operationId": "getApiV1AdminSessionsIdAudit",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ],
+        "description": "Admin manages sessions. Staff can only read currently assigned sessions and cannot see the staff roster. Members are denied. Dates are explicit YYYY-MM-DD in Asia/Yangon. Creation rejects archived plans and assignments require enabled staff accounts. State/roster writes require current version and a reason; stale versions return VERSION_CONFLICT. No scan or attendance side effects. Name, plan and meetup date remain immutable in this increment.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/DomainAudit"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_INPUT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN or PASSWORD_CHANGE_REQUIRED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND, including unassigned session IDs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "VERSION_CONFLICT, INVALID_STAFF or PLAN_ARCHIVED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/members/me/qr": {
+      "get": {
+        "summary": "Read own personal QR",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ],
+        "description": "Own QR is available to any authenticated account after temporary-password replacement, even without a membership. Admin-only metadata/rotation/history do not return payloads. Regeneration checks the current version and records only metadata plus the reason; the previous QR is invalid. Responses are private and no-store. No public QR lookup or validation endpoint exists. QR content must be treated as opaque by clients; rendering or decoding does not establish check-in eligibility. Staff scanning/attendance will be a separate protected operation.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PersonalQr"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_INPUT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN or PASSWORD_CHANGE_REQUIRED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "VERSION_CONFLICT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/users/{id}/qr": {
+      "get": {
+        "summary": "Read QR metadata without payload",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ],
+        "description": "Own QR is available to any authenticated account after temporary-password replacement, even without a membership. Admin-only metadata/rotation/history do not return payloads. Regeneration checks the current version and records only metadata plus the reason; the previous QR is invalid. Responses are private and no-store. No public QR lookup or validation endpoint exists. QR content must be treated as opaque by clients; rendering or decoding does not establish check-in eligibility. Staff scanning/attendance will be a separate protected operation.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QrMetadata"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_INPUT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN or PASSWORD_CHANGE_REQUIRED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "VERSION_CONFLICT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/users/{id}/qr/regenerate": {
+      "post": {
+        "summary": "Regenerate a member QR",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ],
+        "description": "Own QR is available to any authenticated account after temporary-password replacement, even without a membership. Admin-only metadata/rotation/history do not return payloads. Regeneration checks the current version and records only metadata plus the reason; the previous QR is invalid. Responses are private and no-store. No public QR lookup or validation endpoint exists. QR content must be treated as opaque by clients; rendering or decoding does not establish check-in eligibility. Staff scanning/attendance will be a separate protected operation.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QrMetadata"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_INPUT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN or PASSWORD_CHANGE_REQUIRED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "VERSION_CONFLICT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["version", "reason"],
+                "properties": {
+                  "version": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/users/{id}/qr/audit": {
+      "get": {
+        "summary": "Read QR rotation history",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ],
+        "description": "Own QR is available to any authenticated account after temporary-password replacement, even without a membership. Admin-only metadata/rotation/history do not return payloads. Regeneration checks the current version and records only metadata plus the reason; the previous QR is invalid. Responses are private and no-store. No public QR lookup or validation endpoint exists. QR content must be treated as opaque by clients; rendering or decoding does not establish check-in eligibility. Staff scanning/attendance will be a separate protected operation.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/DomainAudit"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_INPUT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN or PASSWORD_CHANGE_REQUIRED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "VERSION_CONFLICT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/sessions/{id}/check-ins": {
+      "post": {
+        "summary": "Record live QR check-in",
+        "operationId": "recordLiveCheckIn",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "description": "Admin or assigned Staff only. Requires open session on its Yangon meetup date. Current QR/account/assignment/membership/quota are checked transactionally. Repeat scans consume once. Preserve requestId and exact payload on ambiguous network retries; no automatic new operation. Replays require current authorization and QR but may recover committed results after session closes. Failures disclose no member identity. No backfill/cancellation endpoint in this increment.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckInInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Committed or existing check-in / safe replay",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckInResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_INPUT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN or PASSWORD_CHANGE_REQUIRED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND for unassigned/unknown session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "INVALID_QR, ACCOUNT_DISABLED, SESSION_CLOSED, SESSION_DATE_MISMATCH, NO_ELIGIBLE_MEMBERSHIP, VISITS_EXHAUSTED or IDEMPOTENCY_CONFLICT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE. Preserve operation identity for retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/attendance": {
+      "get": {
+        "operationId": "listAttendance",
+        "summary": "Admin attendance history",
+        "description": "Newest occurrence first, stable id tie-break. Inclusive from/to filter the session meetup date (Asia/Yangon). No credentials, phone numbers or QR payloads. Unknown query fields rejected. Admin only on admin route; member route always scopes to authenticated account. Read-only snapshot; no visit changes.",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 120
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["effective", "cancelled"]
+            }
+          },
+          {
+            "name": "method",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["scan", "backfill"]
+            }
+          },
+          {
+            "name": "planId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sessionId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "membershipId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "History page",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["items", "nextCursor"],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AttendanceRecord"
+                      }
+                    },
+                    "nextCursor": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid filters or cursor"
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/members/me/attendance": {
+      "get": {
+        "operationId": "getOwnAttendance",
+        "summary": "Own attendance history",
+        "description": "Newest occurrence first, stable id tie-break. Inclusive from/to filter the session meetup date (Asia/Yangon). No credentials, phone numbers or QR payloads. Unknown query fields rejected. Admin only on admin route; member route always scopes to authenticated account. Read-only snapshot; no visit changes.",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 120
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["effective", "cancelled"]
+            }
+          },
+          {
+            "name": "method",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["scan", "backfill"]
+            }
+          },
+          {
+            "name": "planId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sessionId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "membershipId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "History page",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["items", "nextCursor"],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AttendanceRecord"
+                      }
+                    },
+                    "nextCursor": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid filters or cursor"
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/admin/sessions/{id}/attendance/backfill": {
+      "post": {
+        "operationId": "backfillAttendance",
+        "summary": "Admin records historical attendance",
+        "description": "Admin only. Historical session date must be before today in Asia/Yangon, and match occurredAt. Open or closed session allowed. No QR required. Target account must currently be enabled; a noncancelled membership must cover the historical date and have current available quota. A term expired today remains eligible if it covered that date. Atomic attendance, quota, operation record and reasoned audit. Exact retries use the same requestId and normalized input; replay returns original result and never recreates cancelled attendance. Idempotency keys share the live-scan namespace per actor. Different deliberate requests for existing effective attendance return ALREADY_CHECKED_IN and original time. Failed checks disclose no identity.",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BackfillInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Confirmed or recovered attendance result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckInResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Admin required or account/session revoked"
+          },
+          "404": {
+            "description": "Session not found"
+          },
+          "409": {
+            "description": "BACKFILL_DATE_INVALID, ACCOUNT_DISABLED, NO_ELIGIBLE_MEMBERSHIP, VISITS_EXHAUSTED or IDEMPOTENCY_CONFLICT"
+          },
+          "503": {
+            "description": "Unconfirmed outcome; retry same operation identity"
+          }
+        }
+      }
+    },
+    "/api/v1/admin/attendance/{id}/cancel": {
+      "post": {
+        "operationId": "cancelAttendance",
+        "summary": "Admin cancels attendance and restores one visit",
+        "description": "Reason required. Naturally idempotent for the immutable attendance ID; no requestId needed. First cancellation atomically refunds the original membership once and writes an audit. Retries/concurrent duplicates return ALREADY_CANCELLED with original reason/actor/time, never overwrite it or refund again. Balances are current locked snapshots, not original cached balances. Corrections are allowed for disabled targets, expired/cancelled memberships and closed sessions. Does not extend/reopen a membership or change a replacement term. History/facts retained. Old scan/backfill operations remain cancelled; only a new eligible operation can deliberately check in again.",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["reason"],
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Confirmed or previously completed cancellation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttendanceCancellationResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid reason or unknown fields"
+          },
+          "401": {
+            "description": "Unauthenticated or revoked session"
+          },
+          "403": {
+            "description": "Admin required"
+          },
+          "404": {
+            "description": "Attendance not found"
+          },
+          "503": {
+            "description": "Unconfirmed outcome; retry same attendance ID/reason"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "sessionCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "better-auth.session_token"
+      },
+      "bearerSession": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "schemas": {
+      "Credentials": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["phone", "password"],
+        "properties": {
+          "phone": {
+            "type": "string",
+            "example": "09791234567"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 128
+          }
+        }
+      },
+      "Signup": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "phone", "password"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "phone": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 128
+          }
+        }
+      },
+      "MemberIdentity": {
+        "type": "object",
+        "required": ["id", "name", "phone", "role", "mustChangePassword"],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["member", "staff", "admin"]
+          },
+          "mustChangePassword": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AuthIdentity": {
+        "type": "object",
+        "required": ["user"],
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/MemberIdentity"
+          },
+          "token": {
+            "type": "string",
+            "description": "Only returned to X-MOE-Client: mobile on signup/login. Store securely; do not log."
+          }
+        }
+      },
+      "MemberProfile": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["userId", "memberNumber", "name", "phone", "language"],
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "memberNumber": {
+            "type": "string",
+            "example": "MOE-000001"
+          },
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "language": {
+            "type": "string",
+            "enum": ["en", "my"]
+          }
+        }
+      },
+      "AccountSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "name",
+          "phone",
+          "role",
+          "enabled",
+          "mustChangePassword"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["member", "staff", "admin"]
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "mustChangePassword": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AccountOperationError": {
+        "type": "object",
+        "required": ["statusCode", "code", "message"],
+        "properties": {
+          "statusCode": {
+            "type": "integer"
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "INVALID_INPUT",
+              "UNAUTHENTICATED",
+              "FORBIDDEN",
+              "PASSWORD_CHANGE_REQUIRED",
+              "NOT_FOUND",
+              "CONFLICT",
+              "RATE_LIMITED",
+              "UNAVAILABLE"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "PlanInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "description",
+          "benefits",
+          "totalVisits",
+          "reason"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "benefits": {
+            "type": "string",
+            "maxLength": 4000
+          },
+          "totalVisits": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        }
+      },
+      "MembershipInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "userId",
+          "planId",
+          "planVersion",
+          "startDate",
+          "endDate",
+          "reason"
+        ],
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "planId": {
+            "type": "string"
+          },
+          "planVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        }
+      },
+      "MembershipStatus": {
+        "type": "string",
+        "enum": ["Cancelled", "Completed", "Expired", "Upcoming", "Active"]
+      },
+      "Plan": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "benefits",
+          "totalVisits",
+          "archived",
+          "version",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "benefits": {
+            "type": "string"
+          },
+          "totalVisits": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "archived": {
+            "type": "boolean"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "_count": {
+            "type": "object",
+            "properties": {
+              "memberships": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "Membership": {
+        "type": "object",
+        "required": [
+          "id",
+          "userId",
+          "planId",
+          "startDate",
+          "endDate",
+          "totalVisits",
+          "usedVisits",
+          "remainingVisits",
+          "version",
+          "status",
+          "user",
+          "plan"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "planId": {
+            "type": "string"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "totalVisits": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "usedVisits": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "remainingVisits": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "status": {
+            "$ref": "#/components/schemas/MembershipStatus"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/Plan"
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "phone": {
+                "type": "string"
+              },
+              "profile": {
+                "type": ["object", "null"],
+                "properties": {
+                  "memberNumber": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          },
+          "cancelledAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "cancellationReason": {
+            "type": ["string", "null"]
+          },
+          "renewedFromId": {
+            "type": ["string", "null"]
+          }
+        }
+      },
+      "DomainAudit": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "actorId": {
+            "type": "string"
+          },
+          "actorName": {
+            "type": "string"
+          },
+          "entityId": {
+            "type": "string"
+          },
+          "entityType": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "before": {
+            "type": ["object", "null"]
+          },
+          "after": {
+            "type": ["object", "null"]
+          }
+        }
+      },
+      "DomainError": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "integer"
+          },
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "MeetupSession": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "planId",
+          "meetupDate",
+          "open",
+          "version",
+          "plan"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "planId": {
+            "type": "string"
+          },
+          "meetupDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "open": {
+            "type": "boolean"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "plan": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "archived": {
+                "type": "boolean"
+              }
+            }
+          },
+          "staff": {
+            "type": "array",
+            "description": "Admin responses only; staff never receive the roster.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "enabled": {
+                  "type": "boolean"
+                },
+                "role": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "SessionCreate": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "planId",
+          "meetupDate",
+          "open",
+          "staffIds",
+          "reason"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "planId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "meetupDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "open": {
+            "type": "boolean"
+          },
+          "staffIds": {
+            "type": "array",
+            "maxItems": 100,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        }
+      },
+      "SessionStateChange": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["open", "version", "reason"],
+        "properties": {
+          "open": {
+            "type": "boolean"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        }
+      },
+      "SessionStaffChange": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["staffIds", "version", "reason"],
+        "properties": {
+          "staffIds": {
+            "type": "array",
+            "maxItems": 100,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        }
+      },
+      "QrMetadata": {
+        "type": "object",
+        "required": ["userId", "version", "updatedAt"],
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PersonalQr": {
+        "type": "object",
+        "required": [
+          "payload",
+          "format",
+          "version",
+          "updatedAt",
+          "memberNumber",
+          "name"
+        ],
+        "properties": {
+          "payload": {
+            "type": "string",
+            "pattern": "^moe:member:v1:[0-9a-f-]{36}:[A-Za-z0-9_-]{43}$",
+            "description": "Opaque signed member identifier. Render the complete string exactly. Never log/store in analytics or put it in URLs. This is not a session token."
+          },
+          "format": {
+            "type": "string",
+            "const": "moe-member-v1"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "memberNumber": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "CheckInInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["requestId", "qrPayload"],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Generate once per deliberate scan; preserve the same ID and payload on ambiguous network retries."
+          },
+          "qrPayload": {
+            "type": "string",
+            "maxLength": 256,
+            "description": "Exact member QR payload. Never place in URLs, logs, analytics or persistence."
+          }
+        }
+      },
+      "CheckInResult": {
+        "type": "object",
+        "required": [
+          "outcome",
+          "attendanceId",
+          "checkedInAt",
+          "member",
+          "plan",
+          "session",
+          "membership"
+        ],
+        "properties": {
+          "outcome": {
+            "type": "string",
+            "enum": ["CHECKED_IN", "ALREADY_CHECKED_IN", "CANCELLED"]
+          },
+          "replayed": {
+            "type": "boolean"
+          },
+          "attendanceId": {
+            "type": "string"
+          },
+          "checkedInAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "member": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "memberNumber": {
+                "type": "string"
+              }
+            }
+          },
+          "plan": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "session": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "meetupDate": {
+                "type": "string",
+                "format": "date"
+              }
+            }
+          },
+          "membership": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "totalVisits": {
+                "type": "integer"
+              },
+              "usedVisits": {
+                "type": "integer"
+              },
+              "remainingVisits": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "AttendanceRecord": {
+        "type": "object",
+        "required": [
+          "id",
+          "membershipId",
+          "occurredAt",
+          "recordedAt",
+          "method",
+          "status",
+          "member",
+          "plan",
+          "session",
+          "recordedBy",
+          "cancellation"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "membershipId": {
+            "type": "string"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "recordedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "method": {
+            "type": "string",
+            "enum": ["scan", "backfill"]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["effective", "cancelled"]
+          },
+          "member": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "memberNumber": {
+                "type": "string"
+              }
+            }
+          },
+          "plan": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "session": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "meetupDate": {
+                "type": "string",
+                "format": "date"
+              }
+            }
+          },
+          "recordedBy": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "cancellation": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "reason": {
+                "type": "string"
+              },
+              "by": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "BackfillInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["requestId", "userId", "occurredAt", "reason"],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Actual attendance instant, ISO 8601 UTC or explicit timezone offset. Yangon date must equal session meetup date, strictly before today."
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        }
+      },
+      "AttendanceCancellationResult": {
+        "type": "object",
+        "required": [
+          "outcome",
+          "attendanceId",
+          "refundApplied",
+          "cancellation",
+          "membership"
+        ],
+        "properties": {
+          "outcome": {
+            "type": "string",
+            "enum": ["CANCELLED", "ALREADY_CANCELLED"]
+          },
+          "attendanceId": {
+            "type": "string"
+          },
+          "refundApplied": {
+            "type": "boolean",
+            "description": "True only for the transaction that performed the cancellation."
+          },
+          "cancellation": {
+            "type": "object",
+            "required": ["at", "reason", "by"],
+            "properties": {
+              "at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "reason": {
+                "type": "string"
+              },
+              "by": {
+                "type": "object",
+                "required": ["id", "name"],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "membership": {
+            "type": "object",
+            "required": ["id", "totalVisits", "usedVisits", "remainingVisits"],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "totalVisits": {
+                "type": "integer"
+              },
+              "usedVisits": {
+                "type": "integer"
+              },
+              "remainingVisits": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

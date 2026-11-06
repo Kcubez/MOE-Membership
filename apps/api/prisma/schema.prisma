@@ -1,0 +1,254 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Existing auth tables; Prisma Migrate now owns schema changes.
+// Never expose full auth records through public APIs.
+model AuthUser {
+  id                 String         @id(map: "moe_auth_user_pkey")
+  name               String
+  email              String         @unique(map: "moe_auth_user_email_key")
+  emailVerified      Boolean
+  image              String?
+  createdAt          DateTime       @default(now()) @db.Timestamptz(6)
+  updatedAt          DateTime       @default(now()) @db.Timestamptz(6)
+  phone              String         @unique(map: "moe_auth_user_phone_key")
+  role               String
+  mustChangePassword Boolean        @default(false)
+  authVersion        Int            @default(0)
+  enabled            Boolean
+  checkInsReceived Attendance[] @relation("AttendanceMember")
+  checkInsRecorded Attendance[] @relation("AttendanceRecorder")
+  checkInsCancelled Attendance[] @relation("AttendanceCanceller")
+  checkInOperations CheckInOperation[]
+  qr                 MemberQr?
+  meetupAssignments  MeetupStaff[]
+  memberships        Membership[]
+  profile            MemberProfile?
+  accounts           AuthAccount[]
+  sessions           AuthSession[]
+
+  @@map("moe_auth_user")
+}
+
+model AuthAccount {
+  id                    String    @id(map: "moe_auth_account_pkey")
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime? @db.Timestamptz(6)
+  refreshTokenExpiresAt DateTime? @db.Timestamptz(6)
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime  @db.Timestamptz(6)
+  user                  AuthUser  @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "moe_auth_account_userId_fkey")
+
+  @@index([userId], map: "moe_auth_account_userId_idx")
+  @@map("moe_auth_account")
+}
+
+model AuthRateLimit {
+  id          String @id(map: "moe_auth_rate_limit_pkey")
+  key         String @unique(map: "moe_auth_rate_limit_key_key")
+  count       Int
+  lastRequest BigInt
+
+  @@map("moe_auth_rate_limit")
+}
+
+model AuthSession {
+  authVersion Int      @default(0)
+  id          String   @id(map: "moe_auth_session_pkey")
+  expiresAt   DateTime @db.Timestamptz(6)
+  token       String   @unique(map: "moe_auth_session_token_key")
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime @db.Timestamptz(6)
+  ipAddress   String?
+  userAgent   String?
+  userId      String
+  user        AuthUser @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "moe_auth_session_userId_fkey")
+
+  @@index([userId], map: "moe_auth_session_userId_idx")
+  @@map("moe_auth_session")
+}
+
+model AuthVerification {
+  id         String   @id(map: "moe_auth_verification_pkey")
+  identifier String
+  value      String
+  expiresAt  DateTime @db.Timestamptz(6)
+  createdAt  DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt  DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([identifier], map: "moe_auth_verification_identifier_idx")
+  @@map("moe_auth_verification")
+}
+
+model MemberProfile {
+  memberNumber Int      @id @default(autoincrement())
+  userId       String   @unique
+  language     String   @default("en")
+  user         AuthUser @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("member_profiles")
+}
+
+model AccountAudit {
+  id        String   @id @default(uuid())
+  actorId   String?
+  targetId  String
+  action    String
+  reason    String
+  before    Json?
+  after     Json?
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([targetId, createdAt])
+  @@map("account_audit")
+}
+
+model Plan {
+  id             String          @id @default(uuid())
+  name           String
+  description    String
+  benefits       String
+  totalVisits    Int
+  archived       Boolean         @default(false)
+  version        Int             @default(1)
+  createdAt      DateTime        @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime        @default(now()) @db.Timestamptz(6)
+  memberships    Membership[]
+  meetupSessions MeetupSession[]
+
+  @@map("plans")
+}
+
+model Membership {
+  id                 String       @id @default(uuid())
+  userId             String
+  planId             String
+  startDate          DateTime     @db.Date
+  endDate            DateTime     @db.Date
+  totalVisits        Int
+  usedVisits         Int          @default(0)
+  cancelledAt        DateTime?    @db.Timestamptz(6)
+  cancellationReason String?
+  version            Int          @default(1)
+  renewedFromId      String?
+  renewedFrom        Membership?  @relation("MembershipRenewals", fields: [renewedFromId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  renewals           Membership[] @relation("MembershipRenewals")
+  user               AuthUser     @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  plan               Plan         @relation(fields: [planId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  createdAt          DateTime     @default(now()) @db.Timestamptz(6)
+  updatedAt          DateTime     @default(now()) @db.Timestamptz(6)
+
+  @@index([userId, planId])
+  @@index([planId])
+  @@index([renewedFromId])
+  @@map("memberships")
+  attendance Attendance[]
+  @@unique([id,userId,planId])
+}
+
+model DomainAudit {
+  id         String   @id @default(uuid())
+  entityType String
+  entityId   String
+  actorId    String
+  actorName  String
+  action     String
+  reason     String
+  before     Json?
+  after      Json?
+  createdAt  DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([entityType, entityId, createdAt])
+  @@map("domain_audit")
+}
+
+model MeetupSession {
+  id          String        @id @default(uuid())
+  name        String
+  planId      String
+  meetupDate  DateTime      @db.Date
+  open        Boolean       @default(false)
+  version     Int           @default(1)
+  createdAt   DateTime      @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime      @default(now()) @db.Timestamptz(6)
+  plan        Plan          @relation(fields: [planId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  assignments MeetupStaff[]
+
+  @@index([meetupDate, id])
+  @@index([planId])
+  @@map("meetup_sessions")
+  attendance Attendance[]
+  @@unique([id,planId])
+}
+
+model MeetupStaff {
+  sessionId String
+  userId    String
+  session   MeetupSession @relation(fields: [sessionId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  user      AuthUser      @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@id([sessionId, userId])
+  @@index([userId, sessionId])
+  @@map("meetup_staff")
+}
+
+model MemberQr {
+  userId       String   @id
+  credentialId String   @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  version      Int      @default(1)
+  updatedAt    DateTime @default(now()) @db.Timestamptz(6)
+  user         AuthUser @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("member_qr")
+}
+
+model Attendance {
+ id String @id @default(uuid())
+ userId String
+ planId String
+ membershipId String
+ sessionId String
+ occurredAt DateTime @db.Timestamptz(6)
+ recordedAt DateTime @default(now()) @db.Timestamptz(6)
+ recordedById String
+ method String @default("scan")
+ cancelledAt DateTime? @db.Timestamptz(6)
+ cancelledById String?
+ cancellationReason String?
+ member AuthUser @relation("AttendanceMember",fields:[userId],references:[id],onDelete:Restrict,onUpdate:NoAction)
+ recorder AuthUser @relation("AttendanceRecorder",fields:[recordedById],references:[id],onDelete:Restrict,onUpdate:NoAction)
+ canceller AuthUser? @relation("AttendanceCanceller",fields:[cancelledById],references:[id],onDelete:Restrict,onUpdate:NoAction)
+ membership Membership @relation(fields:[membershipId,userId,planId],references:[id,userId,planId],onDelete:Restrict,onUpdate:NoAction)
+ session MeetupSession @relation(fields:[sessionId,planId],references:[id,planId],onDelete:Restrict,onUpdate:NoAction)
+ operations CheckInOperation[]
+ @@index([userId,occurredAt])
+ @@index([sessionId,occurredAt])
+ @@index([membershipId])
+ @@map("attendance")
+}
+model CheckInOperation {
+ actorId String
+ requestId String @db.Uuid
+ fingerprint String
+ attendanceId String
+ result Json
+ createdAt DateTime @default(now()) @db.Timestamptz(6)
+ actor AuthUser @relation(fields:[actorId],references:[id],onDelete:Restrict,onUpdate:NoAction)
+ attendance Attendance @relation(fields:[attendanceId],references:[id],onDelete:Restrict,onUpdate:NoAction)
+ @@id([actorId,requestId])
+ @@index([attendanceId])
+ @@map("check_in_operations")
+}
