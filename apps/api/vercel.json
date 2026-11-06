@@ -1,5 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nestjs",
-  "buildCommand": "npm run db:generate && npm run build"
+  "buildCommand": "npm run db:generate && npm run build",
+  "functions": {
+    "src/main.ts": {
+      "includeFiles": "../../node_modules/swagger-ui-dist/**"
+    }
+  }
 }
