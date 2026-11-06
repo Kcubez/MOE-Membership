@@ -16,6 +16,43 @@ export async function createApp(factory: typeof NestFactory = NestFactory) {
   });
   app.setGlobalPrefix('api/v1');
   app.use(helmet());
+  // Explicit file references let serverless tracing retain Swagger's assets.
+  const swaggerAssets = {
+    '/docs/swagger-ui-bundle.js': {
+      type: 'application/javascript',
+      body: readFileSync(
+        new URL(
+          '../../../node_modules/swagger-ui-dist/swagger-ui-bundle.js',
+          import.meta.url,
+        ),
+      ),
+    },
+    '/docs/swagger-ui-standalone-preset.js': {
+      type: 'application/javascript',
+      body: readFileSync(
+        new URL(
+          '../../../node_modules/swagger-ui-dist/swagger-ui-standalone-preset.js',
+          import.meta.url,
+        ),
+      ),
+    },
+    '/docs/swagger-ui.css': {
+      type: 'text/css',
+      body: readFileSync(
+        new URL(
+          '../../../node_modules/swagger-ui-dist/swagger-ui.css',
+          import.meta.url,
+        ),
+      ),
+    },
+  };
+  for (const [path, asset] of Object.entries(swaggerAssets)) {
+    app
+      .getHttpAdapter()
+      .get(path, (_req: unknown, res: import('express').Response) => {
+        res.type(asset.type).send(asset.body);
+      });
+  }
   const document = JSON.parse(
     readFileSync(
       new URL('../../../postman/specs/openapi.json', import.meta.url),
