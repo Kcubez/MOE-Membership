@@ -3,9 +3,9 @@ import { NestFactory } from '@nestjs/core';
 import helmet from 'helmet';
 import { AppModule } from './app.module.js';
 import { readConfig } from './config.js';
-export async function createApp() {
+export async function createApp(factory: typeof NestFactory = NestFactory) {
   const config = readConfig();
-  const app = await NestFactory.create(AppModule, {
+  const app = await factory.create(AppModule, {
     logger: ['error', 'warn', 'log'],
   });
   app.setGlobalPrefix('api/v1');
