@@ -18,6 +18,9 @@ import { readConfig } from '../config.js';
 const credentials = z
   .object({ phone: z.string().max(40), password: z.string().min(8).max(128) })
   .strict();
+const login = credentials.extend({
+  portal: z.enum(['member', 'console']).optional(),
+});
 const signup = credentials.extend({ name: z.string().trim().min(1).max(120) });
 @Controller('auth')
 export class AuthController {
@@ -46,9 +49,7 @@ export class AuthController {
       );
     let payload: Record<string, unknown> | undefined;
     if (action === 'signup' || action === 'login') {
-      const parsed = (action === 'signup' ? signup : credentials).safeParse(
-        req.body,
-      );
+      const parsed = (action === 'signup' ? signup : login).safeParse(req.body);
       if (!parsed.success) throw new HttpException('Invalid input', 400);
       let phone: string;
       try {
@@ -80,6 +81,7 @@ export class AuthController {
           select: { authVersion: true },
         });
         headers.set('x-moe-auth-version', String(account?.authVersion ?? 0));
+        if (req.body.portal) headers.set('x-moe-login-portal', req.body.portal);
       }
       const response = await runtime.auth.handler(
         new Request(`${runtime.baseURL}/internal-auth/${route.path}`, {

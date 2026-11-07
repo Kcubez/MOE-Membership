@@ -148,7 +148,7 @@ test(
         .set('X-MOE-Client', 'mobile')
         .send({ name: 'Duplicate', phone: '+959791234567', password });
       assert.ok(duplicate.status >= 400);
-      await api
+      const invalidCredentials = await api
         .post('/api/v1/auth/login')
         .set('X-MOE-Client', 'mobile')
         .send({ phone: '09791234567', password: 'wrong-password' })
@@ -163,10 +163,21 @@ test(
         .set('Origin', 'https://untrusted.example')
         .send({ phone: '09791234567', password })
         .expect(403);
+      const sessionCount = () =>
+        pool.query('SELECT count(*) FROM moe_auth_session');
+      const beforeMismatch = await sessionCount();
+      const mismatch = await api
+        .post('/api/v1/auth/login')
+        .set('Origin', 'http://localhost:5173')
+        .send({ phone: '09791234567', password, portal: 'console' })
+        .expect(401);
+      assert.deepEqual(mismatch.body, invalidCredentials.body);
+      assert.equal(mismatch.headers['set-cookie'], undefined);
+      assert.deepEqual((await sessionCount()).rows, beforeMismatch.rows);
       const browser = await api
         .post('/api/v1/auth/login')
         .set('Origin', 'http://localhost:5173')
-        .send({ phone: '09791234567', password })
+        .send({ phone: '09791234567', password, portal: 'member' })
         .expect(200);
       assert.equal(browser.body.token, undefined);
       const cookies = browser.headers['set-cookie'];

@@ -121,10 +121,10 @@
             "description": "Invalid input"
           },
           "401": {
-            "description": "Invalid credentials or session"
+            "description": "AUTH_FAILED for invalid credentials, disabled accounts, or wrong login portal"
           },
           "403": {
-            "description": "Untrusted origin or account disabled"
+            "description": "Untrusted origin or missing trusted client context"
           },
           "429": {
             "description": "Too many requests"
@@ -4464,6 +4464,11 @@
         "additionalProperties": false,
         "required": ["phone", "password"],
         "properties": {
+          "portal": {
+            "type": "string",
+            "enum": ["member", "console"],
+            "description": "Restricts session issuance to the specified portal. Optional for existing API clients."
+          },
           "phone": {
             "type": "string",
             "example": "09791234567"

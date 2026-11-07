@@ -142,7 +142,7 @@ Use `postman/collections/accounts.postman_collection.json` only against an isola
 
 ## Web console
 
-Open `http://127.0.0.1:5173/console` after starting `npm run dev:api` and `npm run dev:web` in separate terminals. Use `/login` for Admin/Staff sign-in. The root URL sends signed-in Admin/Staff to `/console` and other visitors to `/login`. The legacy `/member` preview has been removed.
+Open `http://127.0.0.1:5173/console` after starting the API and web dev servers. Admin and Staff sign in at `/console/login`. Members sign in at `/login` and use `/member`.
 
 The console references the senior-provided MOE prototype's sidebar, logo and orange/neutral styling, but reads/writes the real shared API. Admins can view live account counts, search/filter/page accounts, create Member/Staff accounts, edit access, and reset passwords after manual verification. All signed-in roles can change their password. Temporary-password accounts must replace their password before opening the workspace; successful password changes require a fresh sign-in. Staff/Member views do not expose Admin controls.
 
@@ -186,15 +186,15 @@ The shared Flutter API is `GET /api/v1/members/me/qr`; handoff details are in `d
 
 ## Web route policy
 
-React hosts the Admin/Staff console and a public member registration page. `/login` is the console sign-in page; `/signup` creates member accounts through the shared signup API. Member credentials still work on the shared login API, but the React client shows a member-app notice and no console features. Flutter owns member login, QR and membership screens on its own app/host; member registration is available in both React and Flutter. Optionally set the public `VITE_MEMBER_APP_URL` in apps/web to the actual Flutter web URL to show a member-app link; without it, the console shows guidance without inventing a destination.
+React provides separate Member and Admin/Staff sign-in pages with shared branding. Member self-registration is at `/signup`. Flutter uses the shared API.
 
 Routes: `/console`, `/console/users`, `/console/plans`, `/console/memberships`, `/console/sessions`, `/console/scanner`, `/console/attendance`, `/console/reports`, `/console/audit-logs`, `/console/settings`. Reports/global audit remain placeholders; Admin attendance history is live. Staff see overview, assigned sessions, scanner and settings. Admin/Staff see no Personal QR menu; Admin retains member QR regeneration in Users & staff. QR rows and member APIs remain intact.
 
-Unauthenticated console visits redirect to `/login` with an allowlisted returnTo path. Login returns Admin/Staff only to routes their role can access; external destinations are rejected. Staff opening Admin-only pages return to the dashboard. `/console/accounts` and `/console/audit` canonicalize to `/console/users` and `/console/audit-logs`; `/member` and `/console/qr` retire to the appropriate login/dashboard entry; `/register` aliases to `/signup`. Unknown paths show a not-found page. Production hosting must rewrite SPA route requests to index.html. Backend guards continue enforcing real API authorization; client routing is a UI boundary.
+Unauthenticated console and member visits redirect to their respective sign-in pages with an allowlisted returnTo. Unknown paths show a not-found page. Production hosting must rewrite SPA routes to index.html.
 
 ## React member signup
 
-`/signup` accepts name, Myanmar phone, password and password confirmation. It calls the existing signup API without any role input and creates only a member account, with no OTP. Success establishes the member session and shows account-ready guidance; it does not grant console access or assign a membership. The QR is provisioned by the backend. Members use Flutter to view QR/memberships. Existing member sessions see account-ready guidance on this route; Admin/Staff sessions return to the console. Sign out before testing a new registration. A Create member account link is available on `/login`.
+`/signup` creates a member account with no OTP and opens the member workspace. The backend provisions the QR. Membership assignment is a separate Admin operation.
 
 ## Loading and request recovery
 

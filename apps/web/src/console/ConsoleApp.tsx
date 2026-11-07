@@ -102,6 +102,7 @@ function canonicalPath() {
 function readPage() {
   const path = canonicalPath();
   if (memberSection(path)) return 'member';
+  if (path === '/console/login') return 'console-login';
   if (path === '/login') return 'login';
   if (path === '/signup') return 'signup';
   return pages.find((item) => pagePath(item.key) === path)?.key || 'not-found';
@@ -224,13 +225,13 @@ function Console({
     const legacy = path === '/console/qr';
     const known =
       !!memberSection(path) ||
-      ['/login', '/signup'].includes(path) ||
+      ['/login', '/console/login', '/signup'].includes(path) ||
       pages.some((item) => pagePath(item.key) === path);
     let target: string | undefined;
     if (user?.role === 'member') {
       if (memberSection(path)) target = undefined;
       else if (
-        ['/', '/login', '/signup'].includes(path) ||
+        ['/', '/login', '/console/login', '/signup'].includes(path) ||
         path.startsWith('/console')
       ) {
         const requested = new URLSearchParams(window.location.search).get(
@@ -239,11 +240,17 @@ function Console({
         target = requested && memberSection(requested) ? requested : '/member';
       }
     } else if (path === '/' || legacy)
-      target = consoleRole ? '/console' : '/login';
+      target = consoleRole ? '/console' : legacy ? '/console/login' : '/login';
     else if (!known) return;
-    else if (!user && !['/login', '/signup'].includes(path))
-      target = '/login?returnTo=' + encodeURIComponent(path);
-    else if (consoleRole && ['/login', '/signup'].includes(path)) {
+    else if (!user && !['/login', '/console/login', '/signup'].includes(path))
+      target =
+        (path.startsWith('/console') ? '/console/login' : '/login') +
+        '?returnTo=' +
+        encodeURIComponent(path);
+    else if (
+      consoleRole &&
+      ['/login', '/console/login', '/signup'].includes(path)
+    ) {
       const requested = new URLSearchParams(window.location.search).get(
         'returnTo',
       );
@@ -258,7 +265,7 @@ function Console({
     )
       target = '/console';
     else if (path !== window.location.pathname)
-      target = path + (path === '/login' ? window.location.search : '');
+      target = path + window.location.search;
     if (target && target !== address) {
       window.history.replaceState(null, '', target);
       setAddress(target);
@@ -269,9 +276,12 @@ function Console({
   const changed = useCallback(() => setRevision((value) => value + 1), []);
   const signedOut = useCallback((text: string) => {
     setUser(null);
-    window.history.replaceState(null, '', '/login');
-    setAddress('/login');
-    setPage('login');
+    const loginPath = canonicalPath().startsWith('/console')
+      ? '/console/login'
+      : '/login';
+    window.history.replaceState(null, '', loginPath);
+    setAddress(loginPath);
+    setPage(readPage());
     setNotice({ text, success: true });
     setMenu(false);
   }, []);
@@ -402,6 +412,10 @@ function Console({
           />
         ) : (
           <SignIn
+            key={page}
+            portal={
+              canonicalPath().startsWith('/console') ? 'console' : 'member'
+            }
             notice={notice}
             onSignedIn={(value) => {
               setNotice(undefined);
@@ -643,9 +657,11 @@ function Console({
   );
 }
 function SignIn({
+  portal,
   notice,
   onSignedIn,
 }: {
+  portal: 'member' | 'console';
   notice?: { text: string; success: boolean };
   onSignedIn: (user: Identity) => void;
 }) {
@@ -661,12 +677,15 @@ function SignIn({
       const result = await consoleApi.login(
         String(form.get('phone') || '').trim(),
         String(form.get('password') || ''),
+        portal,
       );
       onSignedIn(result.user);
     } catch (error) {
       setError(
         error instanceof ApiError && error.status === 401
-          ? t('Phone number or password is incorrect.')
+          ? t(
+              'Unable to sign in. Check your phone number and password, then try again.',
+            )
           : messageOf(error),
       );
     } finally {
@@ -677,7 +696,7 @@ function SignIn({
     <section className="c-auth-card">
       <Brand />
       <p className="c-eyebrow">MOE MEMBERSHIP SYSTEM</p>
-      <h1>{t('Sign in')}</h1>
+      <h1>{t(portal === 'console' ? 'Console sign in' : 'Member sign in')}</h1>
       <p className="c-subtitle">
         {t('Sign in with your phone number and password.')}
       </p>
@@ -717,17 +736,23 @@ function SignIn({
           {!busy && <ArrowRightIcon />}
         </button>
       </form>
-      <p className="c-auth-note">
-        <LockClosedIcon />
-        {t('Members, administrators and staff can sign in here.')}
-      </p>
-      <p className="c-auth-note">
-        {t('New to MOE? Create a member account to get started.')}
-      </p>
-      <a className="c-member-link" href="/signup">
-        {t('Create member account')} <ArrowRightIcon />
-      </a>
-      {memberAppUrl() && (
+      {portal === 'console' && (
+        <p className="c-auth-note">
+          <LockClosedIcon />
+          {t('For MOE administrators and staff.')}
+        </p>
+      )}
+      {portal === 'member' && (
+        <>
+          <p className="c-auth-note">
+            {t('New to MOE? Create a member account to get started.')}
+          </p>
+          <a className="c-member-link" href="/signup">
+            {t('Create member account')} <ArrowRightIcon />
+          </a>
+        </>
+      )}
+      {portal === 'member' && memberAppUrl() && (
         <a className="c-member-link" href={memberAppUrl()}>
           {t('Open member app')} <ArrowRightIcon />
         </a>

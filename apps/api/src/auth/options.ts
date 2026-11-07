@@ -68,8 +68,19 @@ export function buildAuth(
             );
             const state = user as unknown as {
               enabled: boolean;
+              role: string;
               authVersion: number;
             } | null;
+            const portal = context?.headers?.get('x-moe-login-portal');
+            if (
+              state?.enabled &&
+              ((portal === 'member' && state.role !== 'member') ||
+                (portal === 'console' &&
+                  state.role !== 'admin' &&
+                  state.role !== 'staff'))
+            ) {
+              return false;
+            }
             return state?.enabled === true && state.authVersion === expected
               ? { data: { ...session, authVersion: expected } }
               : false;

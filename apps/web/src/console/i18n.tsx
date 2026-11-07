@@ -201,7 +201,6 @@ const my: Record<string, string> = {
   'Your member account has been created. Use the member app to view your QR and membership.':
     'Member account ဖွင့်ပြီးပါပြီ။ QR နှင့် membership ကြည့်ရန် Member app ကို အသုံးပြုပါ။',
   'Member account ready': 'Member account အဆင်သင့်ဖြစ်ပါပြီ',
-  'Admin / Staff sign in': 'Admin / Staff ဝင်ရန်',
   'Creating an account does not assign a membership. Admin will assign your plan separately.':
     'Account ဖွင့်ရုံဖြင့် membership မရသေးပါ။ Admin က သင့် Plan ကို သီးခြားသတ်မှတ်ပေးပါမည်။',
   'Enter your full name.': 'သင့်အမည်အပြည့်အစုံကို ထည့်ပါ။',
@@ -315,6 +314,13 @@ const my: Record<string, string> = {
     'အသင်းဝင်များ၊ စီမံခန့်ခွဲသူများနှင့် ဝန်ထမ်းများ ဤနေရာမှ အကောင့်ဝင်နိုင်ပါသည်။',
   'New to MOE? Create a member account to get started.':
     'MOE တွင် အကောင့်မရှိသေးပါက အသင်းဝင်အကောင့် ဖွင့်နိုင်ပါသည်။',
+  'Member sign in': 'အသင်းဝင် အကောင့်ဝင်ရန်',
+  'For MOE administrators and staff.':
+    'MOE စီမံခန့်ခွဲသူနှင့် ဝန်ထမ်းများအတွက်။',
+  'Use the sign-in page for your account.':
+    'သင့်အကောင့်အတွက် သက်ဆိုင်ရာ ဝင်ရောက်ရန်စာမျက်နှာကို သုံးပါ။',
+  'Unable to sign in. Check your phone number and password, then try again.':
+    'အကောင့်ဝင်၍ မရပါ။ ဖုန်းနံပါတ်နှင့် စကားဝှက်ကို စစ်ဆေးပြီး ထပ်စမ်းပါ။',
   'Console sign in': 'စီမံခန့်ခွဲရန် ဝင်မည်',
   'Phone number': 'ဖုန်းနံပါတ်',
   Password: 'စကားဝှက်',

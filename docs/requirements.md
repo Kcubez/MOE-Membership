@@ -87,7 +87,7 @@ Verify both member clients share account/QR/plans/history; equivalent phone form
 
 ## Confirmed console route decision — 5 November 2026
 
-React hosts Admin/Staff login at /login and management under /console. Flutter hosts member login/signup and member-facing screens. Member credentials can authenticate the shared API but cannot enter the React console UI. Remove the legacy React /member preview and Personal QR menu for Admin/Staff. Keep one QR record per account and member own-QR API; hiding the menu does not remove account records. Admin still manages member QR regeneration.
+React hosts Admin/Staff sign-in at `/console/login` and Member sign-in at `/login`. Member registration is at `/signup`. Flutter uses the shared API. Personal QR belongs to the member workspace.
 
 ## React signup addition — 5 November 2026
 

@@ -136,10 +136,10 @@ export const consoleApi = {
     call<{ user: Identity }>('/auth/signup', { method: 'POST', body }),
   session: (signal?: AbortSignal) =>
     call<{ user: Identity }>('/auth/session', { signal }),
-  login: (phone: string, password: string) =>
+  login: (phone: string, password: string, portal: 'member' | 'console') =>
     call<{ user: Identity }>('/auth/login', {
       method: 'POST',
-      body: { phone, password },
+      body: { phone, password, portal },
     }),
   logout: () => call('/auth/logout', { method: 'POST' }),
   summary: (signal?: AbortSignal) =>

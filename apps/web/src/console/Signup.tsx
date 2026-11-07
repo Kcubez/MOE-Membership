@@ -1,3 +1,4 @@
+import { ArrowRightIcon } from '@radix-ui/react-icons';
 import { BusyLabel } from './Shared';
 import { useState, type FormEvent } from 'react';
 import { ApiError, consoleApi, messageOf, type Identity } from './client';
@@ -121,7 +122,7 @@ export function Signup({
         )}
       </p>
       <a className="c-member-link" href="/login">
-        {t('Admin / Staff sign in')}
+        {t('Member sign in')} <ArrowRightIcon />
       </a>
     </section>
   );
