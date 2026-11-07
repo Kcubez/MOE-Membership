@@ -110,7 +110,9 @@ function allowedPages(role: string) {
   return pages.filter(
     (item) =>
       role === 'admin' ||
-      ['overview', 'settings', 'sessions', 'scanner'].includes(item.key),
+      ['overview', 'settings', 'sessions', 'scanner', 'attendance'].includes(
+        item.key,
+      ),
   );
 }
 function memberAppUrl() {
@@ -573,7 +575,10 @@ function Console({
               onNotice={(text) => setNotice({ text, success: true })}
             />
           ) : current.key === 'attendance' ? (
-            <Attendance onAuthError={authError} />
+            <Attendance
+              isAdmin={user.role === 'admin'}
+              onAuthError={authError}
+            />
           ) : current.key === 'scanner' ? (
             <Scanner onAuthError={authError} />
           ) : current.key === 'settings' ? (

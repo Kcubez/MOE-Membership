@@ -143,7 +143,7 @@ Verification includes real PostgreSQL last-visit and duplicate races, removed as
 
 ## Attendance history reads
 
-Admin reads `/api/v1/admin/attendance`; any authenticated account can read only its own history at `/api/v1/members/me/attendance`. Staff cannot browse the Admin history directory. SessionGuard applies current enabled-account, session-revocation and forced-password checks. Owner scope is derived from identity; userId overrides are rejected on the own endpoint.
+Admin reads `/api/v1/admin/attendance`; any authenticated account can read only its own history at `/api/v1/members/me/attendance`. Staff read history through `GET /api/v1/staff/attendance`, filtered by current session assignment in the database query. Closed and past sessions are included while the assignment remains active. SessionGuard applies current enabled-account, session-revocation and forced-password checks. Owner scope is derived from identity; userId overrides are rejected on the own endpoint.
 
 Read-only queries support search by name, exact displayed member number, plan or session name; exact plan/session/membership IDs; Admin userId; scan/backfill method; effective/cancelled status; and inclusive meetup-date ranges in Asia/Yangon. Unknown fields, invalid dates/ranges and malformed cursors fail validation. Pagination uses descending occurredAt and id, with at most 100 records per page; it is a live read, not an export snapshot across requests. Results use explicit projections, retain recording/cancellation actor and timestamps, and exclude phone, credentials, QR and operation fingerprints. Reads never adjust quota.
 

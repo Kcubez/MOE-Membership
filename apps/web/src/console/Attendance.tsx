@@ -10,8 +10,10 @@ import { CancelAttendance } from './CancelAttendance';
 type HistoryPage = { items: RecordItem[]; nextCursor: string | null };
 const initial = { search: '', from: '', to: '', status: '', method: '' };
 export function Attendance({
+  isAdmin,
   onAuthError,
 }: {
+  isAdmin: boolean;
   onAuthError: (error: unknown) => void;
 }) {
   const t = useText();
@@ -32,7 +34,9 @@ export function Attendance({
     const q = new URLSearchParams({ limit: '20' });
     for (const [k, v] of Object.entries(filters)) if (v) q.set(k, v);
     if (cursors[page]) q.set('cursor', cursors[page]!);
-    void call<HistoryPage>(`/admin/attendance?${q}`, { signal: c.signal })
+    void call<HistoryPage>(`/${isAdmin ? 'admin' : 'staff'}/attendance?${q}`, {
+      signal: c.signal,
+    })
       .then(setData)
       .catch((e) => {
         if (!c.signal.aborted) {
@@ -44,7 +48,7 @@ export function Attendance({
         if (!c.signal.aborted) setLoading(false);
       });
     return () => c.abort();
-  }, [filters, page, cursors, revision, onAuthError]);
+  }, [filters, page, cursors, revision, onAuthError, isAdmin]);
   function apply(e: FormEvent) {
     e.preventDefault();
     setFilters({ ...draft, search: draft.search.trim() });
@@ -78,19 +82,24 @@ export function Attendance({
           <BusyLabel busy={loading}>{t('Refresh')}</BusyLabel>
         </button>
       </div>
-      <div className="c-history-actions">
-        <button className="c-button primary" onClick={() => setBackfill(true)}>
-          {t('Backfill attendance')}
-        </button>
-      </div>
-      {backfill && (
+      {isAdmin && (
+        <div className="c-history-actions">
+          <button
+            className="c-button primary"
+            onClick={() => setBackfill(true)}
+          >
+            {t('Backfill attendance')}
+          </button>
+        </div>
+      )}
+      {isAdmin && backfill && (
         <Backfill
           onClose={() => setBackfill(false)}
           onSaved={() => setRevision((v) => v + 1)}
           onAuthError={onAuthError}
         />
       )}
-      {cancelling && (
+      {isAdmin && cancelling && (
         <CancelAttendance
           item={cancelling}
           onClose={() => setCancelling(undefined)}
@@ -194,7 +203,7 @@ export function Attendance({
                       'Status',
                       'Recorded by',
                       'Cancellation',
-                      'Actions',
+                      ...(isAdmin ? ['Actions'] : []),
                     ].map((x) => (
                       <th key={x}>{t(x)}</th>
                     ))}
@@ -241,20 +250,22 @@ export function Attendance({
                           '—'
                         )}
                       </td>
-                      <td>
-                        {r.status === 'effective' ? (
-                          <button
-                            type="button"
-                            className="c-button secondary small"
-                            onClick={() => setCancelling(r)}
-                            aria-label={`${t('Cancel attendance')}: ${r.member.name}, ${r.session.name}`}
-                          >
-                            {t('Cancel attendance')}
-                          </button>
-                        ) : (
-                          <span>{t('Cancelled')}</span>
-                        )}
-                      </td>
+                      {isAdmin && (
+                        <td>
+                          {r.status === 'effective' ? (
+                            <button
+                              type="button"
+                              className="c-button secondary small"
+                              onClick={() => setCancelling(r)}
+                              aria-label={`${t('Cancel attendance')}: ${r.member.name}, ${r.session.name}`}
+                            >
+                              {t('Cancel attendance')}
+                            </button>
+                          ) : (
+                            <span>{t('Cancelled')}</span>
+                          )}
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>

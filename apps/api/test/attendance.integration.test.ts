@@ -857,6 +857,35 @@ test(
         const full = (await get('/admin/attendance?limit=100').expect(200))
           .body;
         assert.ok(full.items.length > 10);
+        await get('/staff/attendance', m.body.token).expect(403);
+        const staffId = outsider.body.user.id;
+        const sessionId = full.items[0].session.id;
+        await pool.query(
+          'INSERT INTO meetup_staff ("sessionId", "userId") VALUES ($1, $2)',
+          [sessionId, staffId],
+        );
+        const assigned = new Set([sessionId]);
+        const expected = full.items.filter((row: { session: { id: string } }) =>
+          assigned.has(row.session.id),
+        );
+        assert.ok(expected.length > 0 && expected.length < full.items.length);
+        const staffHistory = (
+          await get('/staff/attendance?limit=100', outsider.body.token).expect(
+            200,
+          )
+        ).body;
+        assert.deepEqual(staffHistory.items, expected);
+        const outside = full.items.find(
+          (row: { session: { id: string } }) => !assigned.has(row.session.id),
+        );
+        const staffFiltered = (
+          await get(
+            '/staff/attendance?sessionId=' + outside.session.id,
+            outsider.body.token,
+          ).expect(200)
+        ).body;
+        assert.deepEqual(staffFiltered.items, []);
+
         assert.ok(
           full.items.some(
             (r: { status: string; cancellation: unknown }) =>

@@ -212,7 +212,7 @@ The migration adds effective-attendance uniqueness and transactional visit accou
 
 ## Attendance history
 
-Admin: `/console/attendance` and `GET /api/v1/admin/attendance`. Flutter own history: `GET /api/v1/members/me/attendance`. Search, inclusive Myanmar meetup-date filters, status/method filters and cursor pagination are available. Staff cannot browse the Admin directory. Results retain cancellation and recording metadata. No visit accounting changes or new migration are needed. Saved requests: `postman/collections/attendance.postman_collection.json`. Admin backfill and attendance cancellation are available.
+Admin: `/console/attendance` and `GET /api/v1/admin/attendance`. Flutter own history: `GET /api/v1/members/me/attendance`. Search, inclusive Myanmar meetup-date filters, status/method filters and cursor pagination are available. Staff use the same web page with read-only access to currently assigned sessions through `GET /api/v1/staff/attendance`. Results retain cancellation and recording metadata. No visit accounting changes or new migration are needed. Saved requests: `postman/collections/attendance.postman_collection.json`. Admin backfill and attendance cancellation are available.
 
 ## Admin historical backfill
 

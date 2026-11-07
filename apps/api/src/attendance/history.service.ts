@@ -29,8 +29,9 @@ type Query = z.infer<typeof historyQuery>;
 @Injectable()
 export class HistoryService {
   constructor(@Inject(PrismaService) private readonly db: PrismaService) {}
-  async list(actor: Actor, q: Query, own: boolean) {
-    if (!own && actor.role !== 'admin') throw new ForbiddenException();
+  async list(actor: Actor, q: Query, scope: 'admin' | 'staff' | 'own') {
+    const own = scope === 'own';
+    if (!own && actor.role !== scope) throw new ForbiddenException();
     if (own && q.userId !== undefined)
       throw new BadRequestException({
         code: 'INVALID_INPUT',
@@ -72,6 +73,9 @@ export class HistoryService {
           }
         : {}),
       AND: [
+        ...(scope === 'staff'
+          ? [{ session: { assignments: { some: { userId: actor.id } } } }]
+          : []),
         ...(after
           ? [
               {

@@ -25,11 +25,16 @@ export class HistoryController {
   @Get('admin/attendance')
   @Header('Cache-Control', 'private, no-store')
   admin(@Req() req: AuthenticatedRequest, @Query() query: unknown) {
-    return this.service.list(req.actor, parse(historyQuery, query), false);
+    return this.service.list(req.actor, parse(historyQuery, query), 'admin');
+  }
+  @Get('staff/attendance')
+  @Header('Cache-Control', 'private, no-store')
+  staff(@Req() req: AuthenticatedRequest, @Query() query: unknown) {
+    return this.service.list(req.actor, parse(historyQuery, query), 'staff');
   }
   @Get('members/me/attendance')
   @Header('Cache-Control', 'private, no-store')
   own(@Req() req: AuthenticatedRequest, @Query() query: unknown) {
-    return this.service.list(req.actor, parse(historyQuery, query), true);
+    return this.service.list(req.actor, parse(historyQuery, query), 'own');
   }
 }
