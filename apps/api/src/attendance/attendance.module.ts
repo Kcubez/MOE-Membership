@@ -9,6 +9,7 @@ import { AttendanceService } from './attendance.service.js';
 @Module({
   imports: [AuthModule, PrismaModule],
   controllers: [AttendanceController, HistoryController],
+  exports: [HistoryService],
   providers: [AttendanceService, HistoryService, CancellationService],
 })
 export class AttendanceModule {}

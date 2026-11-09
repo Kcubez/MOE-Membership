@@ -231,3 +231,10 @@ Corrections remain possible for disabled members, cancelled/expired memberships 
 Saved requests: `postman/collections/cancellation.postman_collection.json`. No schema migration is needed. Real PostgreSQL checks cover double cancellation, late audit rollback, transaction-conflict retry, scan/cancel races, preserved history and original-term accounting. Browser and Postman verification use isolated synthetic data. Reports/dashboard metrics, global audit browsing, Flutter integration, physical-device acceptance and deployment remain separate work.
 
 Membership assignment/renewal recipients must currently have Member role and be enabled. Admin/Staff IDs are rejected server-side with INVALID_MEMBER_ROLE. The account picker shows enabled Members only. Console dropdowns now share a styled keyboard-accessible control, and headers show page name plus account name.
+
+## Telegram test bot
+
+1. Create a separate development bot in BotFather and use an isolated staging database and test accounts. Apply migrations with `npm run db:deploy -w @moe/api`.
+2. Deploy the API and React web app over HTTPS. Set `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET` (a random string using letters, numbers, underscores, and hyphens), and `TELEGRAM_LINK_URL` (the web origin followed by `/telegram/link`) on the API. Use the normal trusted web origin and working browser cookie configuration for the link page.
+3. Register a webhook with Telegram's `setWebhook` method. Set `url` to the staging API origin followed by `/api/v1/telegram/webhook`, `secret_token` to the configured webhook secret, and `allowed_updates` to `["message"]`. Keep the bot token in server or operator secrets.
+4. In the private bot chat, send `/start` and tap **Show my QR code**. Follow **Link MOE account**, sign in as a test member, and check the chat. Try **My plan**, **Attendance history**, and `/unlink`. Reopen the link from the bot if Telegram launch data has expired.

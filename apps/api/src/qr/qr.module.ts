@@ -7,6 +7,7 @@ import { PersonalQrController, AdminQrController } from './qr.controller.js';
 @Module({
   imports: [AuthModule, PrismaModule],
   controllers: [PersonalQrController, AdminQrController],
+  exports: [QrService],
   providers: [QrService, AdminGuard],
 })
 export class QrModule {}

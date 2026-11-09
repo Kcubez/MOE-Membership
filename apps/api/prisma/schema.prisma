@@ -32,6 +32,7 @@ model AuthUser {
   profile            MemberProfile?
   accounts           AuthAccount[]
   sessions           AuthSession[]
+  telegramLink       TelegramMemberLink?
 
   @@map("moe_auth_user")
 }
@@ -251,4 +252,13 @@ model CheckInOperation {
  @@id([actorId,requestId])
  @@index([attendanceId])
  @@map("check_in_operations")
+}
+
+model TelegramMemberLink {
+  telegramId  String @id
+  userId      String @unique
+  authVersion Int
+  user        AuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("telegram_member_links")
 }

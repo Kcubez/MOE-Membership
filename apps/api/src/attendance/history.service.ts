@@ -29,7 +29,11 @@ type Query = z.infer<typeof historyQuery>;
 @Injectable()
 export class HistoryService {
   constructor(@Inject(PrismaService) private readonly db: PrismaService) {}
-  async list(actor: Actor, q: Query, scope: 'admin' | 'staff' | 'own') {
+  async list(
+    actor: Pick<Actor, 'id' | 'role'>,
+    q: Query,
+    scope: 'admin' | 'staff' | 'own',
+  ) {
     const own = scope === 'own';
     if (!own && actor.role !== scope) throw new ForbiddenException();
     if (own && q.userId !== undefined)

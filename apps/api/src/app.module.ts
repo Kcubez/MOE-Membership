@@ -1,3 +1,4 @@
+import { TelegramModule } from './telegram/telegram.module.js';
 import { AttendanceModule } from './attendance/attendance.module.js';
 import { QrModule } from './qr/qr.module.js';
 import { MeetupSessionsModule } from './meetup-sessions/meetup-sessions.module.js';
@@ -11,6 +12,7 @@ import { MembersModule } from './members/members.module.js';
 @Module({
   imports: [
     AuthModule,
+    TelegramModule,
     AttendanceModule,
     QrModule,
     MembersModule,

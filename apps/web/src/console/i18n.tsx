@@ -321,6 +321,19 @@ const my: Record<string, string> = {
     'သင့်အကောင့်အတွက် သက်ဆိုင်ရာ ဝင်ရောက်ရန်စာမျက်နှာကို သုံးပါ။',
   'Unable to sign in. Check your phone number and password, then try again.':
     'အကောင့်ဝင်၍ မရပါ။ ဖုန်းနံပါတ်နှင့် စကားဝှက်ကို စစ်ဆေးပြီး ထပ်စမ်းပါ။',
+  'Link MOE account': 'MOE အကောင့်ချိတ်ရန်',
+  'Open this link from the MOE Telegram bot.':
+    'ဤလင့်ခ်ကို MOE Telegram bot မှ ဖွင့်ပါ။',
+  'Sign in once to link this Telegram account.':
+    'ဤ Telegram အကောင့်ကို ချိတ်ရန် တစ်ကြိမ် အကောင့်ဝင်ပါ။',
+  'Sign in and link': 'အကောင့်ဝင်ပြီး ချိတ်မည်',
+  'Back to bot': 'Bot သို့ ပြန်သွားရန်',
+  'Reopen this link from the MOE bot and try again.':
+    'MOE bot မှ လင့်ခ်ကို ပြန်ဖွင့်ပြီး ထပ်စမ်းပါ။',
+  'Account linked. Check your bot chat.':
+    'အကောင့်ချိတ်ပြီးပါပြီ။ Bot chat ကို ကြည့်ပါ။',
+  'Account linked. Tap a button in the bot chat to continue.':
+    'အကောင့်ချိတ်ပြီးပါပြီ။ ဆက်သုံးရန် bot chat ထဲက ခလုတ်ကို နှိပ်ပါ။',
   'Console sign in': 'စီမံခန့်ခွဲရန် ဝင်မည်',
   'Phone number': 'ဖုန်းနံပါတ်',
   Password: 'စကားဝှက်',

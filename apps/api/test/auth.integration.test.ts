@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import request from 'supertest';
-import { randomBytes } from 'node:crypto';
+import { createHmac, randomBytes } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { Pool } from 'pg';
@@ -187,6 +187,95 @@ test(
         .join('; ');
       await api.get('/api/v1/auth/session').set('Cookie', cookie).expect(200);
       await api.get('/api/v1/members/me').set('Cookie', cookie).expect(200);
+      const botToken = 'test-token';
+      const webhookSecret = 'test-secret';
+      const originalFetch = globalThis.fetch;
+      const env = {
+        TELEGRAM_BOT_TOKEN: botToken,
+        TELEGRAM_WEBHOOK_SECRET: webhookSecret,
+        TELEGRAM_LINK_URL: 'https://example.test/telegram/link',
+      };
+      const previousEnv = Object.fromEntries(
+        Object.keys(env).map((name) => [name, process.env[name]]),
+      );
+      Object.assign(process.env, env);
+      const replies: (string | FormData)[] = [];
+      globalThis.fetch = async (url, options) => {
+        if (String(url).startsWith('https://api.telegram.org/bottest-token/')) {
+          replies.push(options?.body as string | FormData);
+          return Response.json({ ok: true });
+        }
+        return originalFetch(url, options);
+      };
+      try {
+        const webhook = (
+          text: string,
+          type = 'private',
+          secret = webhookSecret,
+        ) =>
+          api
+            .post('/api/v1/telegram/webhook')
+            .set('X-Telegram-Bot-Api-Secret-Token', secret)
+            .send({
+              update_id: 1,
+              message: {
+                text,
+                chat: { id: 123, type },
+                from: { id: 123, is_bot: false },
+              },
+            });
+        await webhook('/start', 'private', 'wrong').expect(403);
+        await webhook('Show my QR code', 'group').expect(200);
+        assert.equal(replies.length, 0);
+        await webhook('/start').expect(200);
+        assert.deepEqual(
+          JSON.parse(replies[0] as string).reply_markup.keyboard,
+          [['Show my QR code', 'My plan'], ['Attendance history']],
+        );
+        await webhook('Show my QR code').expect(200);
+        assert.match(replies.at(-1) as string, /Link MOE account/);
+        const params = new URLSearchParams({
+          auth_date: String(Math.floor(Date.now() / 1000)),
+          user: JSON.stringify({ id: 123 }),
+        });
+        const key = createHmac('sha256', 'WebAppData')
+          .update(botToken)
+          .digest();
+        const hash = createHmac('sha256', key)
+          .update(
+            'auth_date=' +
+              params.get('auth_date') +
+              '\nuser=' +
+              params.get('user'),
+          )
+          .digest('hex');
+        const link = (initData: string) =>
+          api
+            .post('/api/v1/telegram/link')
+            .set('Origin', 'http://localhost:5173')
+            .set('Cookie', cookie)
+            .send({ initData, action: 'qr' });
+        await link(params + '&hash=invalid').expect(401);
+        const linked = await link(params + '&hash=' + hash).expect(200);
+        assert.equal(linked.body.delivered, true);
+        const qrReply = replies.at(-1) as FormData;
+        assert.equal(qrReply.get('chat_id'), '123');
+        assert.equal(qrReply.get('protect_content'), 'true');
+        assert.equal((qrReply.get('photo') as File).type, 'image/png');
+        await webhook('My plan').expect(200);
+        assert.match(replies.at(-1) as string, /no active plans/);
+        await webhook('Attendance history').expect(200);
+        assert.match(replies.at(-1) as string, /No attendance/);
+        await webhook('/unlink').expect(200);
+        await webhook('Show my QR code').expect(200);
+        assert.match(replies.at(-1) as string, /Link MOE account/);
+      } finally {
+        globalThis.fetch = originalFetch;
+        for (const [name, value] of Object.entries(previousEnv)) {
+          if (value === undefined) delete process.env[name];
+          else process.env[name] = value;
+        }
+      }
       await api.post('/api/v1/auth/logout').set('Cookie', cookie).expect(403);
       await api
         .post('/api/v1/auth/logout')

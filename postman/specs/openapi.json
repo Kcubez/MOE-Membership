@@ -11,6 +11,103 @@
     }
   ],
   "paths": {
+    "/api/v1/telegram/webhook": {
+      "post": {
+        "summary": "Receive private Telegram bot updates",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Telegram-Bot-Api-Secret-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["update_id"],
+                "properties": {
+                  "update_id": {
+                    "type": "integer"
+                  },
+                  "message": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Update handled or ignored"
+          },
+          "403": {
+            "description": "Invalid webhook secret"
+          },
+          "503": {
+            "description": "Bot or upstream service unavailable"
+          }
+        }
+      }
+    },
+    "/api/v1/telegram/link": {
+      "post": {
+        "summary": "Link Telegram to the authenticated member",
+        "description": "Requires an active member session and fresh signed Telegram Mini App initData. Returns whether the requested bot reply was delivered.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["initData"],
+                "properties": {
+                  "initData": {
+                    "type": "string"
+                  },
+                  "action": {
+                    "type": "string",
+                    "enum": ["qr", "plan", "history"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Link saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "delivered": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid session or Telegram launch data"
+          },
+          "403": {
+            "description": "Member access required"
+          },
+          "409": {
+            "description": "Account already linked elsewhere"
+          }
+        }
+      }
+    },
     "/api/v1/health": {
       "get": {
         "operationId": "getHealth",
