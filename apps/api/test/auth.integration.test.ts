@@ -227,10 +227,13 @@ test(
         await webhook('/start', 'private', 'wrong').expect(403);
         await webhook('Show my QR code', 'group').expect(200);
         assert.equal(replies.length, 0);
-        await webhook('/start').expect(200);
+        await webhook('Hi').expect(200);
         assert.deepEqual(
           JSON.parse(replies[0] as string).reply_markup.keyboard,
-          [['Show my QR code', 'My plan'], ['Attendance history']],
+          [
+            ['📱 Show my QR code', '📋 My plan'],
+            ['📅 Attendance history', '🚪 Logout'],
+          ],
         );
         await webhook('Show my QR code').expect(200);
         assert.match(replies.at(-1) as string, /Link MOE account/);
@@ -262,11 +265,11 @@ test(
         assert.equal(qrReply.get('chat_id'), '123');
         assert.equal(qrReply.get('protect_content'), 'true');
         assert.equal((qrReply.get('photo') as File).type, 'image/png');
-        await webhook('My plan').expect(200);
+        await webhook('📋 My plan').expect(200);
         assert.match(replies.at(-1) as string, /no active plans/);
         await webhook('Attendance history').expect(200);
         assert.match(replies.at(-1) as string, /No attendance/);
-        await webhook('/unlink').expect(200);
+        await webhook('🚪 Logout').expect(200);
         await webhook('Show my QR code').expect(200);
         assert.match(replies.at(-1) as string, /Link MOE account/);
       } finally {

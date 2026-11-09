@@ -23,6 +23,8 @@ const labels = {
   plan: 'My plan',
   history: 'Attendance history',
 } as const;
+const icons = { qr: '📱', plan: '📋', history: '📅' } as const;
+const logoutLabel = '🚪 Logout';
 const telegramId = z.number().int().positive().max(Number.MAX_SAFE_INTEGER);
 const update = z.object({
   update_id: z.number().int(),
@@ -103,27 +105,45 @@ export class TelegramService {
       return { ok: true };
     const id = String(message.from.id);
     const action = telegramAction.options.find(
-      (key) => labels[key] === message.text,
+      (key) =>
+        labels[key] === message.text ||
+        icons[key] + ' ' + labels[key] === message.text,
     );
-    if (message.text === '/start') {
-      await this.send(id, 'Choose what you want to see.', {
-        keyboard: [[labels.qr, labels.plan], [labels.history]],
-        resize_keyboard: true,
-        is_persistent: true,
-      });
-    } else if (message.text === '/unlink') {
-      await this.db.client.telegramMemberLink.deleteMany({
+    if (message.text === '/unlink' || message.text === logoutLabel) {
+      const { count } = await this.db.client.telegramMemberLink.deleteMany({
         where: { telegramId: id },
       });
-      await this.send(id, 'Your MOE account is disconnected from Telegram.');
-    } else if (action && !(await this.deliver(id, action))) {
+      await this.send(
+        id,
+        count
+          ? 'Your MOE account is disconnected from Telegram.'
+          : 'No MOE account is linked to Telegram.',
+      );
+    } else if (!action) {
+      await this.send(
+        id,
+        'Welcome to MOE Membership! Use the buttons below to view your QR code, membership plan, or attendance history.',
+        {
+          keyboard: [
+            [icons.qr + ' ' + labels.qr, icons.plan + ' ' + labels.plan],
+            [icons.history + ' ' + labels.history, logoutLabel],
+          ],
+          resize_keyboard: true,
+          is_persistent: true,
+        },
+      );
+    } else if (!(await this.deliver(id, action))) {
       const url = new URL(config().linkUrl);
       url.searchParams.set('action', action);
-      await this.send(id, 'Sign in to MOE once to link your member account.', {
-        inline_keyboard: [
-          [{ text: 'Link MOE account', web_app: { url: url.toString() } }],
-        ],
-      });
+      await this.send(
+        id,
+        'Link your MOE account to continue. You’ll only need to do this once.',
+        {
+          inline_keyboard: [
+            [{ text: 'Link MOE account', web_app: { url: url.toString() } }],
+          ],
+        },
+      );
     }
     return { ok: true };
   }
