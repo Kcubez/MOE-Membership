@@ -107,7 +107,7 @@ export function Attendance({
           onAuthError={onAuthError}
         />
       )}
-      <section className="c-panel c-account-info">
+      <section className="c-panel c-account-info c-attendance-history">
         <form onSubmit={apply} className="c-history-filters">
           <label>
             {t('Search')}
