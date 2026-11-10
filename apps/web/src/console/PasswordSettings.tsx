@@ -63,7 +63,7 @@ export function PasswordSettings({
         <input
           type="text"
           autoComplete="username"
-          value={user.phone}
+          value={(user.role === 'member' ? user.phone : user.email) ?? ''}
           readOnly
           hidden
         />

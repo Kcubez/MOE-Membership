@@ -1,3 +1,4 @@
+import { consoleEmail } from '../auth/email.js';
 import {
   Controller,
   Post,
@@ -101,11 +102,17 @@ export class AdminUsersController {
       z
         .object({
           name: z.string().trim().min(1).max(120),
-          phone: z.string().max(40),
+          phone: z.string().max(40).optional(),
+          email: consoleEmail.optional(),
           temporaryPassword: password,
           role: z.enum(['member', 'staff']),
         })
-        .strict(),
+        .strict()
+        .refine((data) =>
+          data.role === 'member'
+            ? !!data.phone && !data.email
+            : !!data.email && !data.phone,
+        ),
       body,
     );
     return this.service.create(req.actor, data);

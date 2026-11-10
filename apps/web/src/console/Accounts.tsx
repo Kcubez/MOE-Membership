@@ -115,8 +115,8 @@ export function Accounts(props: Props) {
           <form className="c-search" onSubmit={searchSubmit}>
             <MagnifyingGlassIcon />
             <input
-              aria-label={t('Search by name or phone')}
-              placeholder={t('Search by name or phone')}
+              aria-label={t('Search by name, email or phone')}
+              placeholder={t('Search by name, email or phone')}
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
@@ -208,7 +208,11 @@ export function Accounts(props: Props) {
                                 <small className="c-you">{t('You')}</small>
                               )}
                             </strong>
-                            <span>{account.phone}</span>
+                            <span>
+                              {account.role === 'member'
+                                ? account.phone
+                                : account.email}
+                            </span>
                           </div>
                         </div>
                       </td>
@@ -318,7 +322,7 @@ export function Accounts(props: Props) {
           <div className="c-empty">
             <MagnifyingGlassIcon />
             <h2>{t('No matching accounts')}</h2>
-            <p>{t('Try a different name or phone number.')}</p>
+            <p>{t('Try a different name, email or phone number.')}</p>
             <button
               className="c-button secondary"
               onClick={() => {
@@ -395,7 +399,9 @@ function AccountDialog({
       if (action.kind === 'create') {
         const result = await consoleApi.create({
           name: String(form.get('name') || '').trim(),
-          phone: String(form.get('phone') || '').trim(),
+          ...(role === 'staff'
+            ? { email: String(form.get('email') || '').trim() }
+            : { phone: String(form.get('phone') || '').trim() }),
           temporaryPassword: String(form.get('password') || ''),
           role,
         });
@@ -441,37 +447,10 @@ function AccountDialog({
     <Dialog title={title} onClose={onClose} busy={busy}>
       <p className="c-subtitle">
         {target
-          ? `${target.name} · ${target.phone}`
-          : t(
-              'Create a member or staff account. An existing phone keeps its current account.',
-            )}
+          ? `${target.name} · ${(target.role === 'member' ? target.phone : target.email) ?? ''}`
+          : t('Create a member or staff account.')}
       </p>
       <form className="c-form" onSubmit={submit}>
-        {action.kind === 'create' && (
-          <>
-            <label>
-              {t('Full name')}
-              <input
-                name="name"
-                required
-                autoFocus
-                maxLength={120}
-                autoComplete="off"
-              />
-            </label>
-            <label>
-              {t('Phone number')}
-              <input
-                name="phone"
-                type="tel"
-                required
-                maxLength={40}
-                placeholder="09… / +959…"
-                autoComplete="off"
-              />
-            </label>
-          </>
-        )}
         {action.kind !== 'reset' && (
           <label>
             {t('Role')}
@@ -484,6 +463,46 @@ function AccountDialog({
               <option value="staff">{t('Staff')}</option>
             </Select>
           </label>
+        )}
+        {action.kind === 'create' && (
+          <>
+            <label>
+              {t('Full name')}
+              <input
+                name="name"
+                required
+                autoFocus
+                maxLength={120}
+                autoComplete="off"
+              />
+            </label>
+            {role === 'staff' ? (
+              <label>
+                {t('Email address')}
+                <input
+                  key="staff-email"
+                  name="email"
+                  type="email"
+                  required
+                  maxLength={254}
+                  autoComplete="off"
+                />
+              </label>
+            ) : (
+              <label>
+                {t('Phone number')}
+                <input
+                  key="member-phone"
+                  name="phone"
+                  type="tel"
+                  required
+                  maxLength={40}
+                  placeholder="09… / +959…"
+                  autoComplete="off"
+                />
+              </label>
+            )}
+          </>
         )}
         {action.kind === 'access' ? (
           <label>

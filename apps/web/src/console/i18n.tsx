@@ -334,6 +334,17 @@ const my: Record<string, string> = {
     'အကောင့်ချိတ်ပြီးပါပြီ။ Bot chat ကို ကြည့်ပါ။',
   'Account linked. Tap a button in the bot chat to continue.':
     'အကောင့်ချိတ်ပြီးပါပြီ။ ဆက်သုံးရန် bot chat ထဲက ခလုတ်ကို နှိပ်ပါ။',
+  'Email address': 'အီးမေးလ်လိပ်စာ',
+  'Sign in with your email address and password.':
+    'အီးမေးလ်လိပ်စာနှင့် စကားဝှက်ဖြင့် ဝင်ပါ။',
+  'Unable to sign in. Check your email address and password, then try again.':
+    'အကောင့်ဝင်၍ မရပါ။ အီးမေးလ်လိပ်စာနှင့် စကားဝှက်ကို စစ်ဆေးပြီး ထပ်စမ်းပါ။',
+  'Search by name, email or phone':
+    'အမည်၊ အီးမေးလ် သို့မဟုတ် ဖုန်းနံပါတ်ဖြင့် ရှာရန်',
+  'Try a different name, email or phone number.':
+    'အခြား အမည်၊ အီးမေးလ် သို့မဟုတ် ဖုန်းနံပါတ်ဖြင့် ရှာကြည့်ပါ။',
+  'Create a member or staff account.':
+    'အသင်းဝင် သို့မဟုတ် ဝန်ထမ်း အကောင့်ဖွင့်ပါ။',
   'Console sign in': 'စီမံခန့်ခွဲရန် ဝင်မည်',
   'Phone number': 'ဖုန်းနံပါတ်',
   Password: 'စကားဝှက်',

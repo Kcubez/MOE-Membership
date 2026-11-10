@@ -18,7 +18,8 @@
     "db:status": "prisma migrate status",
     "db:baseline": "prisma migrate resolve --applied 0_auth_baseline",
     "db:diff": "prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code",
-    "admin:bootstrap": "tsx scripts/bootstrap-admin.ts"
+    "admin:bootstrap": "tsx scripts/bootstrap-admin.ts",
+    "admin:set-console-email": "tsx scripts/set-console-email.ts"
   },
   "dependencies": {
     "@nestjs/common": "12.3.2",

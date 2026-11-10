@@ -3,7 +3,7 @@
   "info": {
     "title": "MOE Shared API",
     "version": "0.11.1",
-    "description": "Shared React and Flutter API. Phone/password authentication without OTP; profiles, personal QR, memberships, sessions, check-ins, attendance history and Admin corrections. Native clients use X-MOE-Client: mobile and Bearer sessions; browser clients use trusted-origin HttpOnly cookies. Reports/export remain pending."
+    "description": "Shared React and Flutter API. Member phone/password and console email/password authentication; profiles, personal QR, memberships, sessions, check-ins, attendance history and Admin corrections. Native clients use X-MOE-Client: mobile and Bearer sessions; browser clients use trusted-origin HttpOnly cookies. Reports/export remain pending."
   },
   "servers": [
     {
@@ -200,7 +200,7 @@
     },
     "/api/v1/auth/login": {
       "post": {
-        "summary": "Sign in with Myanmar phone/password",
+        "summary": "Sign in with member phone or console email and password",
         "operationId": "loginAuth",
         "description": "Web uses HttpOnly cookies and must send a trusted Origin on writes. Flutter sends X-MOE-Client: mobile on writes and Authorization: Bearer <token> after login. Mobile signup/login returns token; web never returns it in JSON. No raw Better Auth routes are public. Phone is normalized to +95.",
         "responses": {
@@ -246,7 +246,10 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Credentials"
+                "oneOf": [
+                  { "$ref": "#/components/schemas/Credentials" },
+                  { "$ref": "#/components/schemas/ConsoleCredentials" }
+                ]
               }
             }
           }
@@ -648,7 +651,19 @@
               "schema": {
                 "type": "object",
                 "additionalProperties": false,
-                "required": ["name", "phone", "temporaryPassword", "role"],
+                "required": ["name", "temporaryPassword", "role"],
+                "oneOf": [
+                  {
+                    "required": ["phone"],
+                    "properties": { "role": { "enum": ["member"] } },
+                    "not": { "required": ["email"] }
+                  },
+                  {
+                    "required": ["email"],
+                    "properties": { "role": { "enum": ["staff"] } },
+                    "not": { "required": ["phone"] }
+                  }
+                ],
                 "properties": {
                   "name": {
                     "type": "string",
@@ -658,6 +673,7 @@
                   "phone": {
                     "type": "string"
                   },
+                  "email": { "type": "string", "format": "email" },
                   "temporaryPassword": {
                     "type": "string",
                     "minLength": 8,
@@ -4556,6 +4572,16 @@
       }
     },
     "schemas": {
+      "ConsoleCredentials": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["email", "password", "portal"],
+        "properties": {
+          "email": { "type": "string", "format": "email", "maxLength": 254 },
+          "password": { "type": "string", "minLength": 8, "maxLength": 128 },
+          "portal": { "type": "string", "enum": ["console"] }
+        }
+      },
       "Credentials": {
         "type": "object",
         "additionalProperties": false,
@@ -4563,8 +4589,8 @@
         "properties": {
           "portal": {
             "type": "string",
-            "enum": ["member", "console"],
-            "description": "Restricts session issuance to the specified portal. Optional for existing API clients."
+            "enum": ["member"],
+            "description": "Optional for member phone login. Admin and Staff must use ConsoleCredentials."
           },
           "phone": {
             "type": "string",
@@ -4607,8 +4633,14 @@
           "name": {
             "type": "string"
           },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Console accounts only."
+          },
           "phone": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "role": {
             "type": "string",
@@ -4674,8 +4706,14 @@
           "name": {
             "type": "string"
           },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Console accounts only."
+          },
           "phone": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "role": {
             "type": "string",

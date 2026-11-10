@@ -14,13 +14,21 @@ import type {
 import { z } from 'zod';
 import { AuthService } from './auth.service.js';
 import { normalizePhone, phoneIdentity } from './phone.js';
+import { consoleEmail } from './email.js';
 import { readConfig } from '../config.js';
 const credentials = z
   .object({ phone: z.string().max(40), password: z.string().min(8).max(128) })
   .strict();
-const login = credentials.extend({
-  portal: z.enum(['member', 'console']).optional(),
-});
+const login = z.union([
+  credentials.extend({ portal: z.enum(['member', 'console']).optional() }),
+  z
+    .object({
+      email: consoleEmail,
+      password: z.string().min(8).max(128),
+      portal: z.literal('console'),
+    })
+    .strict(),
+]);
 const signup = credentials.extend({ name: z.string().trim().min(1).max(120) });
 @Controller('auth')
 export class AuthController {
@@ -47,20 +55,40 @@ export class AuthController {
         'Trusted Origin or mobile client header required',
         403,
       );
+    let loginEmail: string | undefined;
     let payload: Record<string, unknown> | undefined;
     if (action === 'signup' || action === 'login') {
       const parsed = (action === 'signup' ? signup : login).safeParse(req.body);
       if (!parsed.success) throw new HttpException('Invalid input', 400);
-      let phone: string;
-      try {
-        phone = normalizePhone(parsed.data.phone);
-      } catch {
-        throw new HttpException('Use a valid Myanmar phone number', 400);
-      }
-      payload = { email: phoneIdentity(phone), password: parsed.data.password };
-      if ('name' in parsed.data) {
-        payload.name = parsed.data.name;
-        payload.phone = phone;
+      if ('email' in parsed.data) {
+        loginEmail = parsed.data.email;
+        payload = { email: loginEmail, password: parsed.data.password };
+      } else {
+        if (
+          action === 'login' &&
+          'portal' in parsed.data &&
+          parsed.data.portal === 'console'
+        )
+          return res.status(401).json({
+            code: 'AUTH_FAILED',
+            message: 'Authentication failed',
+          });
+        let phone: string;
+        try {
+          phone = normalizePhone(parsed.data.phone);
+        } catch {
+          throw new HttpException('Use a valid Myanmar phone number', 400);
+        }
+        payload = {
+          email: phoneIdentity(phone),
+          password: parsed.data.password,
+        };
+        if ('name' in parsed.data) {
+          payload.name = parsed.data.name;
+          payload.phone = phone;
+        } else {
+          loginEmail = phoneIdentity(phone);
+        }
       }
     }
     const runtime = this.service.getRuntime();
@@ -77,11 +105,14 @@ export class AuthController {
     try {
       if (action === 'login') {
         const account = await runtime.prisma.authUser.findUnique({
-          where: { phone: normalizePhone(req.body.phone) },
+          where: { email: loginEmail },
           select: { authVersion: true },
         });
         headers.set('x-moe-auth-version', String(account?.authVersion ?? 0));
-        if (req.body.portal) headers.set('x-moe-login-portal', req.body.portal);
+        headers.set(
+          'x-moe-login-portal',
+          'email' in req.body ? 'console' : 'member',
+        );
       }
       const response = await runtime.auth.handler(
         new Request(`${runtime.baseURL}/internal-auth/${route.path}`, {
@@ -117,7 +148,12 @@ export class AuthController {
         user: {
           id: user.id,
           name: user.name,
-          phone: user.phone,
+          phone: user.phone ?? null,
+          ...(user.role !== 'member' &&
+          user.email &&
+          !user.email.endsWith('@phone.moe.invalid')
+            ? { email: user.email }
+            : {}),
           role: user.role,
           mustChangePassword: user.mustChangePassword === true,
         },

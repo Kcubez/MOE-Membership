@@ -17,7 +17,7 @@ model AuthUser {
   image              String?
   createdAt          DateTime       @default(now()) @db.Timestamptz(6)
   updatedAt          DateTime       @default(now()) @db.Timestamptz(6)
-  phone              String         @unique(map: "moe_auth_user_phone_key")
+  phone              String?         @unique(map: "moe_auth_user_phone_key")
   role               String
   mustChangePassword Boolean        @default(false)
   authVersion        Int            @default(0)

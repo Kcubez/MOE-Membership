@@ -113,7 +113,7 @@ Keep Prisma CLI, Client, and adapter-pg on the same supported v7 patch and retai
 Backend account APIs and the Admin dashboard screens are implemented.
 
 - `GET /api/v1/admin/users?limit=20&search=...` — Admin-only account directory, with cursor pagination.
-- `POST /api/v1/admin/users` — create a Member/Staff with a temporary password, or return an existing normalized-phone account unchanged.
+- `POST /api/v1/admin/users` — create a Member with a phone number or Staff with an email, both using a temporary password. A matching Member phone returns the existing account unchanged. A duplicate Staff email returns HTTP 409.
 - `POST /api/v1/account/password` — verify current password, replace it, and revoke **all** sessions. Sign in again afterward.
 - `POST /api/v1/admin/users/:id/reset-password` — requires a reason and `identityVerified: true` after actual Page identity verification; all target sessions are revoked and the replacement password must be changed.
 - `PATCH /api/v1/admin/users/:id/access` — change Member/Staff role or enabled state with a reason; revoke target sessions. This endpoint cannot demote or disable an Admin.
@@ -123,7 +123,7 @@ Backend account APIs and the Admin dashboard screens are implemented.
 After deploying migrations, set these **locally** in `apps/api/.env` (never commit populated values):
 
 ```dotenv
-BOOTSTRAP_ADMIN_PHONE=your-valid-Myanmar-phone
+BOOTSTRAP_ADMIN_EMAIL=your-admin-email
 BOOTSTRAP_ADMIN_NAME=your-name
 BOOTSTRAP_ADMIN_PASSWORD=your-unique-12-to-128-character-temporary-password
 ```
@@ -134,7 +134,7 @@ Run from the repository root:
 npm run admin:bootstrap -w @moe/api
 ```
 
-The command refuses to run if any Admin already exists or the phone is already registered. It never overwrites/promotes an existing account. Remove the three bootstrap values after successful setup. No public bootstrap endpoint exists.
+The command refuses to run if any Admin already exists or the email is already registered. It never overwrites/promotes an existing account. Remove the three bootstrap values after successful setup. No public bootstrap endpoint exists.
 
 Sign in through Postman, then use **Change my password (manual only)** in the auth collection. Set local `currentPassword` and `newPassword` variables; the request uses your signed-in `authToken`. Sign in again with the new password before using Admin APIs. Temporary-password sessions can inspect auth session/logout and replace their password, but cannot access profile or Admin/business APIs. `mustChangePassword` is included in auth identity responses so Flutter can display the replacement screen.
 
@@ -238,3 +238,9 @@ Membership assignment/renewal recipients must currently have Member role and be 
 2. Deploy the API and React web app over HTTPS. Set `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET` (a random string using letters, numbers, underscores, and hyphens), and `TELEGRAM_LINK_URL` (the web origin followed by `/telegram/link`) on the API. Use the normal trusted web origin and working browser cookie configuration for the link page.
 3. Register a webhook with Telegram's `setWebhook` method. Set `url` to the staging API origin followed by `/api/v1/telegram/webhook`, `secret_token` to the configured webhook secret, and `allowed_updates` to `["message"]`. Keep the bot token in server or operator secrets.
 4. In the private bot chat, send `/start` or say hello, then tap **Show my QR code**. Follow **Link MOE account**, sign in as a test member, and check the chat. Try **My plan**, **Attendance history**, and **Logout**. Reopen the link from the bot if Telegram launch data has expired.
+
+## Console email sign-in rollout
+
+Admin and Staff sign in with an email and password at `/console/login`. Gmail and company addresses are accepted. Admin-created Staff accounts require an email and a temporary password. The owner changes the password at first sign-in. Member login and signup still require a Myanmar phone number.
+
+Apply database migrations before bootstrapping the first Admin with an email. For older databases with phone-only Admin or Staff accounts, assign each existing account its verified email by setting `CONSOLE_ACCOUNT_PHONE` and `CONSOLE_ACCOUNT_EMAIL` locally and running `npm run admin:set-console-email -w @moe/api` before deploying the email-only console. This keeps the account ID and password, and revokes existing sessions.

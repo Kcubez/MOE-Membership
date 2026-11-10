@@ -2,9 +2,9 @@ import 'dotenv/config';
 import { randomUUID } from 'node:crypto';
 import { createDb } from '../src/prisma/db.js';
 import { buildAuth } from '../src/auth/options.js';
-import { normalizePhone, phoneIdentity } from '../src/auth/phone.js';
+import { consoleEmail } from '../src/auth/email.js';
 const {
-  BOOTSTRAP_ADMIN_PHONE,
+  BOOTSTRAP_ADMIN_EMAIL,
   BOOTSTRAP_ADMIN_PASSWORD,
   BOOTSTRAP_ADMIN_NAME,
   DATABASE_URL,
@@ -12,7 +12,7 @@ const {
   AUTH_BASE_URL,
 } = process.env;
 if (
-  !BOOTSTRAP_ADMIN_PHONE ||
+  !BOOTSTRAP_ADMIN_EMAIL ||
   !BOOTSTRAP_ADMIN_PASSWORD ||
   !BOOTSTRAP_ADMIN_NAME ||
   !DATABASE_URL ||
@@ -22,17 +22,16 @@ if (
   BOOTSTRAP_ADMIN_PASSWORD.length > 128
 )
   throw new Error(
-    'Set BOOTSTRAP_ADMIN_PHONE, BOOTSTRAP_ADMIN_NAME and a 12–128 character BOOTSTRAP_ADMIN_PASSWORD locally, plus standard auth configuration',
+    'Set BOOTSTRAP_ADMIN_EMAIL, BOOTSTRAP_ADMIN_NAME and a 12–128 character BOOTSTRAP_ADMIN_PASSWORD locally, plus standard auth configuration',
   );
-let phone: string;
-try {
-  phone = normalizePhone(BOOTSTRAP_ADMIN_PHONE);
-} catch {
+const identity = consoleEmail.safeParse(BOOTSTRAP_ADMIN_EMAIL);
+if (!identity.success) {
   console.error(
-    '[INVALID_PHONE] BOOTSTRAP_ADMIN_PHONE must be a valid Myanmar mobile number (09... or +959...). Check the value locally in apps/api/.env.',
+    '[INVALID_EMAIL] BOOTSTRAP_ADMIN_EMAIL must be a valid email address.',
   );
   process.exit(1);
 }
+const email = identity.data;
 class BootstrapError extends Error {
   constructor(
     readonly code: string,
@@ -53,18 +52,17 @@ try {
         'ADMIN_EXISTS',
         'Admin already exists; bootstrap is locked. Sign in with the existing Admin account.',
       );
-    if (await tx.authUser.findUnique({ where: { phone } }))
+    if (await tx.authUser.findUnique({ where: { email } }))
       throw new BootstrapError(
-        'PHONE_EXISTS',
-        'Phone already exists; bootstrap never overwrites existing accounts. Use an unregistered Admin phone number.',
+        'EMAIL_EXISTS',
+        'Email already exists; bootstrap never overwrites existing accounts.',
       );
     const id = randomUUID();
     await tx.authUser.create({
       data: {
         id,
         name: BOOTSTRAP_ADMIN_NAME,
-        phone,
-        email: phoneIdentity(phone),
+        email,
         emailVerified: false,
         role: 'admin',
         enabled: true,

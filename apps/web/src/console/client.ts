@@ -2,7 +2,8 @@ export type Role = 'admin' | 'staff' | 'member';
 export type Identity = {
   id: string;
   name: string;
-  phone: string;
+  phone: string | null;
+  email?: string;
   role: Role;
   mustChangePassword: boolean;
 };
@@ -136,10 +137,16 @@ export const consoleApi = {
     call<{ user: Identity }>('/auth/signup', { method: 'POST', body }),
   session: (signal?: AbortSignal) =>
     call<{ user: Identity }>('/auth/session', { signal }),
-  login: (phone: string, password: string, portal: 'member' | 'console') =>
+  login: (identifier: string, password: string, portal: 'member' | 'console') =>
     call<{ user: Identity }>('/auth/login', {
       method: 'POST',
-      body: { phone, password, portal },
+      body: {
+        ...(portal === 'console' && identifier.includes('@')
+          ? { email: identifier }
+          : { phone: identifier }),
+        password,
+        portal,
+      },
     }),
   logout: () => call('/auth/logout', { method: 'POST' }),
   summary: (signal?: AbortSignal) =>
@@ -164,7 +171,8 @@ export const consoleApi = {
   },
   create: (body: {
     name: string;
-    phone: string;
+    phone?: string;
+    email?: string;
     temporaryPassword: string;
     role: 'member' | 'staff';
   }) =>

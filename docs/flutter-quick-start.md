@@ -7,7 +7,7 @@ After deploying this change, browser documentation is at `https://moe-membership
 
 The canonical contract is `postman/specs/openapi.json`. Postman collections live in `postman/collections`. Swagger is read-only; use Postman with isolated test data for writes. Never test destructive account or attendance changes on real members.
 
-Implemented: phone/password auth, own profile/QR/memberships/history, Admin account/plan/membership/session management, assigned Staff scanning, Admin backfill and cancellation. Reports/export and global audit browsing remain pending. Native Flutter integration and physical-device camera acceptance still need verification.
+Implemented: member phone/password and console email/password auth, own profile/QR/memberships/history, Admin account/plan/membership/session management, assigned Staff scanning, Admin backfill and cancellation. Reports/export and global audit browsing remain pending. Native Flutter integration and physical-device camera acceptance still need verification.
 
 ## Native Android/iOS authentication
 
@@ -39,6 +39,8 @@ Membership status precedence is Cancelled, Completed, Expired, Upcoming, Active.
 History returns `{ "items": [], "nextCursor": null }` when empty. When nextCursor exists, pass it unchanged as cursor for the next page; limit is 1–100. Cancelled attendance remains visible and does not consume a visit. Refresh balances after corrections.
 
 ## Staff scanner
+
+Staff sign in through `POST /auth/login` with `{ "email": "<staff email>", "password": "<password>", "portal": "console" }`. Admin uses the same payload. Follow the password replacement step above when `mustChangePassword` is true.
 
 Call `GET /sessions`; Staff receive only assigned sessions. Choose an open session whose meetup date is today in Asia/Yangon. Decode QR locally, then `POST /sessions/{id}/check-ins` with `{ "requestId": "<new UUID>", "qrPayload": "<scanned payload>" }` and the native auth headers above.
 

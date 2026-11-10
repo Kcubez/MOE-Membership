@@ -1,3 +1,5 @@
+import { consoleEmail } from '../auth/email.js';
+
 import {
   Injectable,
   Inject,
@@ -20,10 +22,16 @@ const publicFields = {
   id: true,
   name: true,
   phone: true,
+  email: true,
   role: true,
   enabled: true,
   mustChangePassword: true,
 } as const;
+function accountView(user: { email: string; role: string }) {
+  return user.role === 'member' || user.email.endsWith('@phone.moe.invalid')
+    ? undefined
+    : user.email;
+}
 @Injectable()
 export class AccountsService {
   constructor(
@@ -104,50 +112,65 @@ export class AccountsService {
               OR: [
                 { name: { contains: search, mode: 'insensitive' as const } },
                 { phone: { contains: search } },
+                {
+                  role: { in: ['admin', 'staff'] },
+                  email: { contains: search, mode: 'insensitive' },
+                },
               ],
             }
           : {}),
       },
     });
     const hasMore = users.length > limit;
-    const items = users.slice(0, limit);
+    const items = users
+      .slice(0, limit)
+      .map((user) => ({ ...user, email: accountView(user) }));
     return { items, nextCursor: hasMore ? items[items.length - 1]!.id : null };
   }
   async create(
     actor: Actor,
     input: {
       name: string;
-      phone: string;
+      phone?: string;
+      email?: string;
       temporaryPassword: string;
       role: 'member' | 'staff';
     },
   ) {
     await this.limit(actor.id);
-    let phone: string;
+    let phone: string | null = null;
     try {
-      phone = normalizePhone(input.phone);
+      if (input.role === 'member') phone = normalizePhone(input.phone ?? '');
     } catch {
       throw new BadRequestException('Use a valid Myanmar phone number');
     }
+    const email = phone ? phoneIdentity(phone) : input.email;
+    if (!email) throw new BadRequestException('Email address is required');
     const context = await this.auth.getRuntime().auth.$context;
     const password = await context.password.hash(input.temporaryPassword);
     try {
       return await this.db.client.$transaction(async (tx) => {
         await this.authorize(tx, actor, true);
         // Serialize normalized-phone reuse, including two admin requests.
-        await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${phone},0))::text`;
+        await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${email},0))::text`;
         const existing = await tx.authUser.findUnique({
-          where: { phone },
+          where: phone ? { phone } : { email },
           select: publicFields,
         });
-        if (existing) return { user: existing, created: false };
+        if (existing) {
+          if (!phone) throw new ConflictException('Email already exists.');
+          return {
+            user: { ...existing, email: accountView(existing) },
+            created: false,
+          };
+        }
         const id = randomUUID();
         const user = await tx.authUser.create({
           data: {
             id,
             name: input.name,
             phone,
-            email: phoneIdentity(phone),
+            email,
             emailVerified: false,
             role: input.role,
             enabled: true,
@@ -178,7 +201,7 @@ export class AccountsService {
             },
           },
         });
-        return { user, created: true };
+        return { user: { ...user, email: accountView(user) }, created: true };
       });
     } catch (error) {
       if (
@@ -187,9 +210,7 @@ export class AccountsService {
         'code' in error &&
         error.code === 'P2002'
       )
-        throw new ConflictException(
-          'Phone already exists; retry to reuse existing account',
-        );
+        throw new ConflictException('Account identifier already exists');
       throw error;
     }
   }
@@ -315,6 +336,15 @@ export class AccountsService {
         throw new ForbiddenException(
           'Cannot alter an Admin through this endpoint',
         );
+      if (
+        target.role !== role &&
+        ((role === 'member' &&
+          (!target.phone || target.email !== phoneIdentity(target.phone))) ||
+          (role === 'staff' && !consoleEmail.safeParse(target.email).success))
+      )
+        throw new ConflictException(
+          'Changing this role requires migrating its sign-in identifier first.',
+        );
       const user = await tx.authUser.update({
         where: { id: targetId },
         data: {
@@ -336,7 +366,7 @@ export class AccountsService {
           after: { enabled, role },
         },
       });
-      return { user };
+      return { user: { ...user, email: accountView(user) } };
     });
   }
 }

@@ -27,7 +27,7 @@ export function buildAuth(
     user: {
       modelName: 'AuthUser',
       additionalFields: {
-        phone: { type: 'string', required: true, unique: true, input: true },
+        phone: { type: 'string', required: false, unique: true, input: true },
         role: { type: 'string', defaultValue: 'member', input: false },
         enabled: { type: 'boolean', defaultValue: true, input: false },
         mustChangePassword: {

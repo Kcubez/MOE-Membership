@@ -21,7 +21,7 @@ The handoff assigns the shared backend/API and responsive Admin/Staff web/scanne
 ## Accounts
 
 - Signup requires full name, phone number, and password. Normalize equivalent phone formats; one account per normalized phone.
-- Admin can create accounts with a temporary password. First login requires changing it; reuse existing accounts for existing phone numbers.
+- Admin can create accounts with a temporary password. First login requires changing it; reuse existing Member accounts for existing phone numbers. Staff accounts require a unique email address. Admin and Staff sign in with email/password. Email is a login identifier, and Gmail is accepted without an invite or verification flow.
 - Both member clients use phone/password login. Telegram identity does not establish membership ownership.
 - Members can change passwords. Forgotten passwords are reset by Admin after manual identity verification through the Page.
 - Admin password reset or account disable invalidates prior sessions. Disabled members cannot check in; disabled staff cannot scan.

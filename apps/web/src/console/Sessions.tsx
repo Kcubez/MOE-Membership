@@ -402,7 +402,7 @@ function StaffPicker({
             />
             <span>
               {staff.name}
-              <small>{staff.phone}</small>
+              <small>{staff.email}</small>
             </span>
           </label>
         ))}

@@ -492,7 +492,7 @@ function Console({
           <span className="c-avatar orange">{initials(user.name)}</span>
           <div>
             <strong>{user.name}</strong>
-            <span>{user.phone}</span>
+            <span>{user.email}</span>
           </div>
           <button
             className="c-icon-button"
@@ -618,8 +618,8 @@ function Console({
                   <dl>
                     <dt>{t('Name')}</dt>
                     <dd>{user.name}</dd>
-                    <dt>{t('Phone number')}</dt>
-                    <dd>{user.phone}</dd>
+                    <dt>{t('Email address')}</dt>
+                    <dd>{user.email}</dd>
                     <dt>{t('Role')}</dt>
                     <dd>
                       <RoleBadge role={user.role} />
@@ -667,6 +667,7 @@ function SignIn({
 }) {
   const t = useText();
   const [busy, setBusy] = useState(false);
+  const usesEmail = portal === 'console';
   const [error, setError] = useState('');
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -675,7 +676,7 @@ function SignIn({
     setBusy(true);
     try {
       const result = await consoleApi.login(
-        String(form.get('phone') || '').trim(),
+        String(form.get('identifier') || '').trim(),
         String(form.get('password') || ''),
         portal,
       );
@@ -684,7 +685,9 @@ function SignIn({
       setError(
         error instanceof ApiError && error.status === 401
           ? t(
-              'Unable to sign in. Check your phone number and password, then try again.',
+              usesEmail
+                ? 'Unable to sign in. Check your email address and password, then try again.'
+                : 'Unable to sign in. Check your phone number and password, then try again.',
             )
           : messageOf(error),
       );
@@ -698,19 +701,24 @@ function SignIn({
       <p className="c-eyebrow">MOE MEMBERSHIP SYSTEM</p>
       <h1>{t(portal === 'console' ? 'Console sign in' : 'Member sign in')}</h1>
       <p className="c-subtitle">
-        {t('Sign in with your phone number and password.')}
+        {t(
+          usesEmail
+            ? 'Sign in with your email address and password.'
+            : 'Sign in with your phone number and password.',
+        )}
       </p>
       {notice && <Alert success={notice.success}>{t(notice.text)}</Alert>}
       <form className="c-form" onSubmit={submit}>
         <label>
-          {t('Phone number')}
+          {t(usesEmail ? 'Email address' : 'Phone number')}
           <input
-            name="phone"
-            type="tel"
+            key={usesEmail ? 'email' : 'phone'}
+            name="identifier"
+            type={usesEmail ? 'email' : 'tel'}
             autoComplete="username"
-            placeholder="09… / +959…"
+            placeholder={usesEmail ? undefined : '09… / +959…'}
             required
-            maxLength={40}
+            maxLength={usesEmail ? 254 : 40}
           />
         </label>
         <label>
@@ -882,7 +890,11 @@ function Overview({
                             </span>
                             <div>
                               <strong>{user.name}</strong>
-                              <span>{user.phone}</span>
+                              <span>
+                                {user.role === 'member'
+                                  ? user.phone
+                                  : user.email}
+                              </span>
                             </div>
                           </div>
                         </td>

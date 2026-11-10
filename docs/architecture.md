@@ -2,7 +2,7 @@
 
 ## Status and selected stack
 
-The system implements React/Vite web clients, a shared NestJS API, and Better Auth phone/password authentication. Prisma 7.10.1 with the official Better Auth Prisma adapter accesses Neon PostgreSQL. Prisma Migrate owns auth and business tables. Flutter is developed independently against the same API. Plans, memberships, personal QR APIs, session management, live scanning, check-ins, history, historical backfill and attendance cancellation are implemented. Reports/export, dashboard metrics and hosted/device acceptance remain separate release work.
+The system implements React/Vite web clients, a shared NestJS API, and Better Auth password authentication. Prisma 7.10.1 with the official Better Auth Prisma adapter accesses Neon PostgreSQL. Prisma Migrate owns auth and business tables. Flutter is developed independently against the same API. Plans, memberships, personal QR APIs, session management, live scanning, check-ins, history, historical backfill and attendance cancellation are implemented. Reports/export, dashboard metrics and hosted/device acceptance remain separate release work.
 
 ```mermaid
 flowchart LR
@@ -19,7 +19,7 @@ Start with a modular monolith. Suggested modules: Auth, Users, Plans, Membership
 
 Use a versioned REST API, proposed prefix `/api/v1`. Before implementing endpoints, save an OpenAPI contract describing auth, required fields, responses, stable error codes, pagination, dates, retry behavior, and side effects. Maintain an authoritative checked-in OpenAPI artifact; derive documentation and initial Postman requests from it, preserving maintained assertions/examples when regenerating. Implemented paths are documented in the local OpenAPI specification.
 
-Phone/password authentication uses Better Auth's default scrypt hashing through its official Prisma adapter. Web clients use HttpOnly cookies; Flutter uses bearer-compatible database-backed sessions. Public transport behavior is described below. Cookie-authenticated writes require a trusted Origin, and CORS allows explicit origins.
+Password authentication uses Better Auth's default scrypt hashing through its official Prisma adapter. Web clients use HttpOnly cookies; Flutter uses bearer-compatible database-backed sessions. Public transport behavior is described below. Cookie-authenticated writes require a trusted Origin, and CORS allows explicit origins.
 
 Admin reset/disabling must invalidate existing credentials promptly; stateless tokens alone cannot satisfy immediate revocation without a server-side status/version check. Restrict temporary-password sessions to password replacement. Persist roles and check both role and session assignment on every sensitive operation.
 
@@ -57,7 +57,7 @@ Use real PostgreSQL integration tests for uniqueness, overlap, double scans, dif
 
 ## Better Auth integration — implemented increment
 
-Public endpoints are `/api/v1/auth/signup`, `/login`, `/session`, and `/logout`. Signup/login accept phone/password (signup also name). Phone numbers are validated as Myanmar numbers and normalized to +95. No OTP or verification service is enabled.
+Public endpoints are `/api/v1/auth/signup`, `/login`, `/session`, and `/logout`. Members use phone/password for signup and login (signup also requires name). Admin and Staff sign in with email/password and send `portal: "console"`. A phone login can only issue a Member session. Phone numbers are validated as Myanmar numbers and normalized to +95. No OTP or verification service is enabled.
 
 Better Auth's email/password credential engine uses a deterministic internal alias `<canonical-digits>@phone.moe.invalid`; this is not a real email, is never verified, and is not exposed by public responses. The actual phone is stored uniquely. Raw Better Auth email/OTP/password-reset routes are not mounted. No email is requested from members. Better Auth owns password hashing (its default scrypt), accounts, sessions, and database-backed rate limits.
 

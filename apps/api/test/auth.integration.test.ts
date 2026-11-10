@@ -353,7 +353,7 @@ test(
     const cliEnv = {
       ...process.env,
       DIRECT_URL: url.toString(),
-      BOOTSTRAP_ADMIN_PHONE: '09791234560',
+      BOOTSTRAP_ADMIN_EMAIL: 'admin@example.com',
       BOOTSTRAP_ADMIN_NAME: 'Test Admin',
       BOOTSTRAP_ADMIN_PASSWORD: 'temporary-admin-123',
     };
@@ -371,14 +371,18 @@ test(
     await app.init();
     const api = request(app.getHttpServer());
     // This workflow exercises many logins; limiter rejection is covered in the prior test.
-    const login = async (phone: string, password: string) => {
+    const login = async (identifier: string, password: string) => {
       await pool.query(
         "DELETE FROM moe_auth_rate_limit WHERE key NOT LIKE 'account-write:%'",
       );
       return api
         .post('/api/v1/auth/login')
         .set('X-MOE-Client', 'mobile')
-        .send({ phone, password });
+        .send(
+          identifier.includes('@')
+            ? { email: identifier, password, portal: 'console' }
+            : { phone: identifier, password },
+        );
     };
     const write = (
       method: 'post' | 'patch',
@@ -393,7 +397,10 @@ test(
     try {
       cli();
       assert.throws(cli, 'Bootstrap refuses a second Admin');
-      const temp = await login('09791234560', 'temporary-admin-123');
+      const temp = await login(
+        cliEnv.BOOTSTRAP_ADMIN_EMAIL,
+        'temporary-admin-123',
+      );
       assert.equal(temp.status, 200);
       assert.equal(temp.body.user.mustChangePassword, true);
       await api
@@ -412,7 +419,10 @@ test(
         .get('/api/v1/auth/session')
         .set('Authorization', `Bearer ${temp.body.token}`)
         .expect(401);
-      const admin = await login('09791234560', 'permanent-admin-456');
+      const admin = await login(
+        cliEnv.BOOTSTRAP_ADMIN_EMAIL,
+        'permanent-admin-456',
+      );
       assert.equal(admin.status, 200);
       assert.equal(admin.body.user.mustChangePassword, false);
       const account = {
@@ -433,7 +443,7 @@ test(
         'post',
         '/api/v1/admin/users',
         admin.body.token,
-        { ...account, role: 'staff' },
+        account,
       ).expect(200);
       assert.equal(reused.body.created, false);
       assert.equal(reused.body.user.role, 'member');
@@ -444,6 +454,32 @@ test(
       await write('post', '/api/v1/admin/users', admin.body.token, {
         ...account,
         role: 'admin',
+      }).expect(400);
+      const staffEmail = 'moe.staff@gmail.com';
+      const staffPassword = 'temporary-staff-123';
+      const emailStaff = await write(
+        'post',
+        '/api/v1/admin/users',
+        admin.body.token,
+        {
+          name: 'Email Staff',
+          email: ' MOE.Staff@gmail.com ',
+          temporaryPassword: staffPassword,
+          role: 'staff',
+        },
+      ).expect(200);
+      assert.equal(emailStaff.body.user.email, staffEmail);
+      assert.equal(emailStaff.body.user.phone, null);
+      const staffLogin = await api
+        .post('/api/v1/auth/login')
+        .set('X-MOE-Client', 'mobile')
+        .send({ email: staffEmail, password: staffPassword, portal: 'console' })
+        .expect(200);
+      assert.equal(staffLogin.body.user.role, 'staff');
+      assert.equal(staffLogin.body.user.mustChangePassword, true);
+      await write('post', '/api/v1/admin/users', admin.body.token, {
+        ...account,
+        role: 'staff',
       }).expect(400);
       const member = await login(account.phone, account.temporaryPassword);
       assert.equal(member.status, 200);
@@ -525,12 +561,12 @@ test(
         `/api/v1/admin/users/${id}/access`,
         admin.body.token,
         { enabled: true, role: 'staff', reason: 'Assign staff role' },
-      ).expect(200);
-      await api
-        .get('/api/v1/members/me')
-        .set('Authorization', `Bearer ${current.body.token}`)
-        .expect(401);
-      const staff = await login(account.phone, 'final-member-password-999');
+      ).expect(409);
+      await write('post', '/api/v1/account/password', staffLogin.body.token, {
+        currentPassword: staffPassword,
+        newPassword: 'permanent-staff-456',
+      }).expect(200);
+      const staff = await login(staffEmail, 'permanent-staff-456');
       assert.equal(staff.body.user.role, 'staff');
       await write(
         'post',
@@ -540,7 +576,7 @@ test(
       ).expect(403);
       await write(
         'patch',
-        `/api/v1/admin/users/${id}/access`,
+        `/api/v1/admin/users/${emailStaff.body.user.id}/access`,
         admin.body.token,
         { enabled: false, role: 'staff', reason: 'Deactivate test staff' },
       ).expect(200);
@@ -548,9 +584,7 @@ test(
         .get('/api/v1/members/me')
         .set('Authorization', `Bearer ${staff.body.token}`)
         .expect(401);
-      assert.ok(
-        (await login(account.phone, 'final-member-password-999')).status >= 400,
-      );
+      assert.ok((await login(staffEmail, 'permanent-staff-456')).status >= 400);
       await write(
         'patch',
         `/api/v1/admin/users/${admin.body.user.id}/access`,
@@ -566,7 +600,7 @@ test(
         .get('/api/v1/admin/users/summary')
         .set('Authorization', `Bearer ${admin.body.token}`)
         .expect(200);
-      assert.equal(summary.body.total, 2);
+      assert.equal(summary.body.total, 3);
       assert.equal(summary.body.staff, 1);
       await api
         .get('/api/v1/admin/users/summary')
