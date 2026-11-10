@@ -17,15 +17,19 @@ export class PlansService {
     cursor?: string;
     search?: string;
     archived?: boolean;
+    trash?: 'true';
   }) {
     const items = await this.db.client.plan.findMany({
       where: {
+        trashedAt: query.trash ? { not: null } : null,
         ...(query.search
           ? { name: { contains: query.search, mode: 'insensitive' as const } }
           : {}),
         ...(query.archived !== undefined ? { archived: query.archived } : {}),
       },
-      include: { _count: { select: { memberships: true } } },
+      include: {
+        _count: { select: { memberships: true, meetupSessions: true } },
+      },
       orderBy: { id: 'asc' },
       take: query.limit + 1,
       ...(query.cursor ? { cursor: { id: query.cursor }, skip: 1 } : {}),
@@ -39,7 +43,9 @@ export class PlansService {
   async get(id: string) {
     const plan = await this.db.client.plan.findUnique({
       where: { id },
-      include: { _count: { select: { memberships: true } } },
+      include: {
+        _count: { select: { memberships: true, meetupSessions: true } },
+      },
     });
     if (!plan) throw new NotFoundException();
     return plan;
@@ -72,6 +78,8 @@ export class PlansService {
       await tx.$queryRaw`SELECT id FROM plans WHERE id=${id} FOR UPDATE`;
       const before = await tx.plan.findUnique({ where: { id } });
       if (!before) throw new NotFoundException();
+      if (before.trashedAt)
+        conflict('PLAN_IN_TRASH', 'Restore this plan from Trash first.');
       if (before.version !== input.version)
         conflict(
           'VERSION_CONFLICT',
@@ -106,6 +114,8 @@ export class PlansService {
       await tx.$queryRaw`SELECT id FROM plans WHERE id=${id} FOR UPDATE`;
       const before = await tx.plan.findUnique({ where: { id } });
       if (!before) throw new NotFoundException();
+      if (before.trashedAt)
+        conflict('PLAN_IN_TRASH', 'Restore this plan from Trash first.');
       if (before.archived === input.archived) return before;
       if (before.version !== input.version)
         conflict(
@@ -131,6 +141,68 @@ export class PlansService {
         JSON.parse(JSON.stringify(after)),
       );
       return after;
+    });
+  }
+  async trash(
+    actor: Actor,
+    id: string,
+    input: {
+      action: 'move' | 'restore' | 'delete';
+      version: number;
+      reason: string;
+    },
+  ) {
+    return this.db.client.$transaction(async (tx) => {
+      const admin = await assertWrite(tx, actor);
+      await tx.$queryRaw`SELECT id FROM plans WHERE id=${id} FOR UPDATE`;
+      const before = await tx.plan.findUnique({
+        where: { id },
+        include: {
+          _count: { select: { memberships: true, meetupSessions: true } },
+        },
+      });
+      if (!before) throw new NotFoundException();
+      if (before.version !== input.version)
+        conflict(
+          'VERSION_CONFLICT',
+          'This plan changed. Refresh before editing.',
+        );
+      if (input.action === 'move' ? before.trashedAt : !before.trashedAt)
+        conflict(
+          'INVALID_TRASH_STATE',
+          'This action is unavailable for the current plan state.',
+        );
+      const deleting = input.action === 'delete';
+      if (
+        deleting &&
+        (before._count.memberships || before._count.meetupSessions)
+      )
+        conflict(
+          'PLAN_IN_USE',
+          'Plans linked to memberships or meetup sessions cannot be permanently deleted.',
+        );
+      const after = deleting
+        ? null
+        : await tx.plan.update({
+            where: { id },
+            data: {
+              trashedAt: input.action === 'move' ? new Date() : null,
+              version: { increment: 1 },
+              updatedAt: new Date(),
+            },
+          });
+      if (deleting) await tx.plan.delete({ where: { id } });
+      await audit(
+        tx,
+        admin,
+        'Plan',
+        id,
+        `plan.trash.${input.action}`,
+        input.reason,
+        JSON.parse(JSON.stringify(before)),
+        after ? JSON.parse(JSON.stringify(after)) : undefined,
+      );
+      return { success: true };
     });
   }
   async history(id: string) {

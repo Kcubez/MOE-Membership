@@ -16,9 +16,21 @@ import { Alert, Dialog, Skeleton } from './Shared';
 import { Pager, AuditDialog, type CatalogProps } from './CatalogShared';
 import { messageOf } from './client';
 import { useText } from './i18n';
+type TrashAction = 'move' | 'restore' | 'delete';
+const trashLabels = {
+  move: 'Move to Trash',
+  restore: 'Restore from Trash',
+  delete: 'Delete permanently',
+} as const;
 type Action =
-  { kind: 'create' } | { kind: 'edit' | 'availability' | 'audit'; plan: Plan };
-export function Plans({ onAuthError, onNotice }: CatalogProps) {
+  | { kind: 'create' }
+  | { kind: 'edit' | 'availability' | 'audit'; plan: Plan }
+  | { kind: 'trash'; operation: TrashAction; plan: Plan };
+export function Plans({
+  onAuthError,
+  onNotice,
+  trash,
+}: CatalogProps & { trash: boolean }) {
   const t = useText();
   const [search, setSearch] = useState('');
   const [applied, setApplied] = useState('');
@@ -36,7 +48,12 @@ export function Plans({ onAuthError, onNotice }: CatalogProps) {
     setError('');
     void catalogApi
       .plans(
-        { search: applied, archived, cursor: cursors[page] },
+        {
+          search: applied,
+          archived: trash ? undefined : archived,
+          trash: trash ? 'true' : undefined,
+          cursor: cursors[page],
+        },
         controller.signal,
       )
       .then(setData)
@@ -50,7 +67,7 @@ export function Plans({ onAuthError, onNotice }: CatalogProps) {
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [applied, archived, page, cursors, revision, onAuthError]);
+  }, [applied, archived, page, cursors, revision, onAuthError, trash]);
   function reset() {
     setPage(0);
     setCursors([undefined]);
@@ -60,20 +77,24 @@ export function Plans({ onAuthError, onNotice }: CatalogProps) {
       <div className="c-page-heading">
         <div>
           <p className="c-eyebrow">MOE MEMBERSHIP SYSTEM</p>
-          <h1>{t('Plans')}</h1>
+          <h1>{t(trash ? 'Trash' : 'Plans')}</h1>
           <p>
             {t(
-              'Reusable visit allowances. Set dates when assigning a membership.',
+              trash
+                ? 'Restore or permanently delete plans moved to Trash.'
+                : 'Reusable visit allowances. Set dates when assigning a membership.',
             )}
           </p>
         </div>
-        <button
-          className="c-button primary"
-          onClick={() => setAction({ kind: 'create' })}
-        >
-          <PlusIcon />
-          {t('Create plan')}
-        </button>
+        {!trash && (
+          <button
+            className="c-button primary"
+            onClick={() => setAction({ kind: 'create' })}
+          >
+            <PlusIcon />
+            {t('Create plan')}
+          </button>
+        )}
       </div>
       <section className="c-panel">
         <div className="c-toolbar">
@@ -95,18 +116,20 @@ export function Plans({ onAuthError, onNotice }: CatalogProps) {
             <button>{t('Search')}</button>
           </form>
           <div className="c-filters">
-            <Select
-              aria-label={t('Plan availability')}
-              value={archived}
-              onValueChange={(value) => {
-                setArchived(value);
-                reset();
-              }}
-            >
-              <option value="">{t('All plans')}</option>
-              <option value="false">{t('Available')}</option>
-              <option value="true">{t('Archived')}</option>
-            </Select>
+            {!trash && (
+              <Select
+                aria-label={t('Plan availability')}
+                value={archived}
+                onValueChange={(value) => {
+                  setArchived(value);
+                  reset();
+                }}
+              >
+                <option value="">{t('All plans')}</option>
+                <option value="false">{t('Available')}</option>
+                <option value="true">{t('Archived')}</option>
+              </Select>
+            )}
             <button
               className="c-icon-button bordered"
               aria-label={t('Refresh')}
@@ -153,7 +176,13 @@ export function Plans({ onAuthError, onNotice }: CatalogProps) {
                     <span
                       className={`c-role ${plan.archived ? '' : 'c-role-admin'}`}
                     >
-                      {t(plan.archived ? 'Archived' : 'Available')}
+                      {t(
+                        plan.trashedAt
+                          ? 'Trash'
+                          : plan.archived
+                            ? 'Archived'
+                            : 'Available',
+                      )}
                     </span>
                   </div>
                   <h2>{plan.name}</h2>
@@ -171,28 +200,88 @@ export function Plans({ onAuthError, onNotice }: CatalogProps) {
                     {plan._count?.memberships ?? 0} {t('assigned memberships')}
                   </small>
                   <div className="c-plan-actions">
-                    <button
-                      className="c-button secondary small"
-                      onClick={() => setAction({ kind: 'edit', plan })}
-                    >
-                      <Pencil1Icon />
-                      {t('Edit')}
-                    </button>
-                    <button
-                      className="c-icon-button bordered"
-                      aria-label={`Change history for ${plan.name}`}
-                      onClick={() => setAction({ kind: 'audit', plan })}
-                    >
-                      <ClockIcon />
-                    </button>
-                    <button
-                      className="c-button secondary small"
-                      onClick={() => setAction({ kind: 'availability', plan })}
-                    >
-                      <ArchiveIcon />
-                      {t(plan.archived ? 'Restore' : 'Archive')}
-                    </button>
+                    {plan.trashedAt ? (
+                      <>
+                        <button
+                          className="c-button secondary small"
+                          onClick={() =>
+                            setAction({
+                              kind: 'trash',
+                              operation: 'restore',
+                              plan,
+                            })
+                          }
+                        >
+                          {t(trashLabels.restore)}
+                        </button>
+                        <button
+                          className="c-button secondary small"
+                          disabled={Boolean(
+                            plan._count?.memberships ||
+                            plan._count?.meetupSessions,
+                          )}
+                          onClick={() =>
+                            setAction({
+                              kind: 'trash',
+                              operation: 'delete',
+                              plan,
+                            })
+                          }
+                        >
+                          {t(trashLabels.delete)}
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          className="c-button secondary small"
+                          onClick={() =>
+                            setAction({
+                              kind: 'trash',
+                              operation: 'move',
+                              plan,
+                            })
+                          }
+                        >
+                          {t(trashLabels.move)}
+                        </button>
+
+                        <button
+                          className="c-button secondary small"
+                          onClick={() => setAction({ kind: 'edit', plan })}
+                        >
+                          <Pencil1Icon />
+                          {t('Edit')}
+                        </button>
+                        <button
+                          className="c-icon-button bordered"
+                          aria-label={`Change history for ${plan.name}`}
+                          onClick={() => setAction({ kind: 'audit', plan })}
+                        >
+                          <ClockIcon />
+                        </button>
+                        <button
+                          className="c-button secondary small"
+                          onClick={() =>
+                            setAction({ kind: 'availability', plan })
+                          }
+                        >
+                          <ArchiveIcon />
+                          {t(plan.archived ? 'Restore' : 'Archive')}
+                        </button>
+                      </>
+                    )}
                   </div>
+                  {plan.trashedAt &&
+                    Boolean(
+                      plan._count?.memberships || plan._count?.meetupSessions,
+                    ) && (
+                      <small>
+                        {t(
+                          'This plan is linked to memberships or meetup sessions.',
+                        )}
+                      </small>
+                    )}
                 </article>
               ))}
             </div>
@@ -233,6 +322,7 @@ export function Plans({ onAuthError, onNotice }: CatalogProps) {
             onAuthError={onAuthError}
             onDone={(message) => {
               setAction(undefined);
+              reset();
               setRevision((value) => value + 1);
               onNotice(message);
             }}
@@ -258,13 +348,15 @@ function PlanDialog({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const title =
-    action.kind === 'availability'
-      ? plan!.archived
-        ? 'Restore plan'
-        : 'Archive plan'
-      : action.kind === 'edit'
-        ? 'Edit plan'
-        : 'Create plan';
+    action.kind === 'trash'
+      ? trashLabels[action.operation]
+      : action.kind === 'availability'
+        ? plan!.archived
+          ? 'Restore plan'
+          : 'Archive plan'
+        : action.kind === 'edit'
+          ? 'Edit plan'
+          : 'Create plan';
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -272,7 +364,16 @@ function PlanDialog({
     setError('');
     try {
       const reason = String(form.get('reason') || '').trim();
-      if (action.kind === 'availability') {
+      if (action.kind === 'trash') {
+        await catalogApi.planTrash(action.plan, action.operation, reason);
+        onDone(
+          action.operation === 'delete'
+            ? 'Plan permanently deleted.'
+            : action.operation === 'move'
+              ? 'Plan moved to Trash.'
+              : 'Plan restored from Trash.',
+        );
+      } else if (action.kind === 'availability') {
         await catalogApi.availability(action.plan, reason);
         onDone(
           action.plan.archived
@@ -309,16 +410,18 @@ function PlanDialog({
   return (
     <Dialog title={t(title)} onClose={onClose} busy={busy}>
       <p className="c-subtitle">
-        {action.kind === 'availability'
-          ? t(
-              'Archiving stops new assignments and renewals. Existing memberships and history are retained.',
-            )
-          : t(
-              'Plan templates contain visits only. Membership dates are entered separately.',
-            )}
+        {action.kind === 'trash'
+          ? `${action.plan.name} · ${t(action.operation === 'delete' ? 'This action cannot be undone.' : 'Existing memberships and meetup sessions are retained.')}`
+          : action.kind === 'availability'
+            ? t(
+                'Archiving stops new assignments and renewals. Existing memberships and history are retained.',
+              )
+            : t(
+                'Plan templates contain visits only. Membership dates are entered separately.',
+              )}
       </p>
       <form className="c-form" onSubmit={submit}>
-        {action.kind !== 'availability' && (
+        {(action.kind === 'edit' || action.kind === 'create') && (
           <>
             <label>
               {t('Plan name')}
@@ -378,17 +481,23 @@ function PlanDialog({
           </button>
           <button
             type="submit"
-            className="c-button primary"
+            className={
+              action.kind === 'trash' && action.operation === 'delete'
+                ? 'c-button danger'
+                : 'c-button primary'
+            }
             disabled={busy}
             aria-busy={busy}
           >
             <BusyLabel busy={busy}>
               {t(
-                action.kind === 'availability'
-                  ? plan!.archived
-                    ? 'Restore plan'
-                    : 'Archive plan'
-                  : 'Save plan',
+                action.kind === 'trash'
+                  ? title
+                  : action.kind === 'availability'
+                    ? plan!.archived
+                      ? 'Restore plan'
+                      : 'Archive plan'
+                    : 'Save plan',
               )}
             </BusyLabel>
           </button>

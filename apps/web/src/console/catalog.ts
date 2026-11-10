@@ -6,10 +6,11 @@ export type Plan = {
   benefits: string;
   totalVisits: number;
   archived: boolean;
+  trashedAt?: string | null;
   version: number;
   createdAt: string;
   updatedAt: string;
-  _count?: { memberships: number };
+  _count?: { memberships: number; meetupSessions?: number };
 };
 export type Membership = {
   id: string;
@@ -62,6 +63,7 @@ export const catalogApi = {
       search?: string;
       cursor?: string;
       archived?: string;
+      trash?: string;
       limit?: number;
     },
     signal?: AbortSignal,
@@ -81,6 +83,18 @@ export const catalogApi = {
       method: 'PATCH',
       body: { archived: !plan.archived, version: plan.version, reason },
     }),
+  planTrash: (
+    plan: Plan,
+    action: 'move' | 'restore' | 'delete',
+    reason: string,
+  ) =>
+    call<{ success: boolean }>(
+      `/admin/plans/${encodeURIComponent(plan.id)}/trash`,
+      {
+        method: 'PATCH',
+        body: { action, version: plan.version, reason },
+      },
+    ),
   memberships: (
     values: {
       search?: string;

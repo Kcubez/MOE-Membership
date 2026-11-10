@@ -607,7 +607,22 @@ test(
         .set('Authorization', `Bearer ${staff.body.token}`)
         .expect(401);
       assert.ok(directory.body.nextCursor);
-      assert.equal('email' in directory.body.items[0], false);
+      const accounts = await api
+        .get('/api/v1/admin/users?limit=20')
+        .set('Authorization', `Bearer ${admin.body.token}`)
+        .expect(200);
+      const byId = (accountId: string) =>
+        accounts.body.items.find(
+          (item: { id: string }) => item.id === accountId,
+        );
+      const memberRow = byId(id);
+      assert.ok(memberRow);
+      assert.equal('email' in memberRow, false);
+      assert.equal(
+        byId(admin.body.user.id)?.email,
+        cliEnv.BOOTSTRAP_ADMIN_EMAIL,
+      );
+      assert.equal(byId(emailStaff.body.user.id)?.email, staffEmail);
       await api
         .get('/api/v1/admin/users')
         .set('Authorization', `Bearer ${staff.body.token}`)

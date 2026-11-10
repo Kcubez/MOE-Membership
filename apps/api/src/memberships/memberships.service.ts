@@ -148,7 +148,7 @@ export class MembershipsService {
             'INVALID_STATE',
             'Cannot assign a membership to a disabled account.',
           );
-        if (plan.archived)
+        if (plan.archived || plan.trashedAt)
           conflict(
             'PLAN_ARCHIVED',
             'This plan is archived. Choose an available plan.',

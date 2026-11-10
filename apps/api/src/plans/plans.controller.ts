@@ -46,6 +46,7 @@ export class PlansController {
     const data = parse(
       pageQuery
         .extend({
+          trash: z.literal('true').optional(),
           archived: z
             .enum(['true', 'false'])
             .optional()
@@ -83,6 +84,26 @@ export class PlansController {
       req.actor,
       id,
       parse(input.extend({ version }).strict(), body),
+    );
+  }
+  @Patch(':id/trash') trash(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Body() body: unknown,
+  ) {
+    return this.service.trash(
+      req.actor,
+      id,
+      parse(
+        z
+          .object({
+            action: z.enum(['move', 'restore', 'delete']),
+            version,
+            reason,
+          })
+          .strict(),
+        body,
+      ),
     );
   }
   @Patch(':id/availability') availability(

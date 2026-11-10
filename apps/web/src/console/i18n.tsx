@@ -2,6 +2,20 @@ import { createContext, useContext } from 'react';
 export type Language = 'en' | 'my';
 export const LanguageContext = createContext<Language>('en');
 const my: Record<string, string> = {
+  Trash: 'အမှိုက်ပုံး',
+  'Restore or permanently delete plans moved to Trash.':
+    'အမှိုက်ပုံးထဲရှိ အစီအစဉ်များကို ပြန်ယူနိုင်သည် သို့မဟုတ် အပြီးဖျက်နိုင်သည်။',
+  'Move to Trash': 'ဖျက်ရန် ဖယ်ထားမည်',
+  'Restore from Trash': 'ပြန်ယူမည်',
+  'Delete permanently': 'အပြီးဖျက်မည်',
+  'This action cannot be undone.': 'ဤလုပ်ဆောင်ချက်ကို ပြန်ပြင်၍ မရပါ။',
+  'Existing memberships and meetup sessions are retained.':
+    'ရှိပြီးသား အသင်းဝင်မှုနှင့် တွေ့ဆုံပွဲမှတ်တမ်းများကို ဆက်လက်သိမ်းထားပါမည်။',
+  'This plan is linked to memberships or meetup sessions.':
+    'ဤအစီအစဉ်ကို အသင်းဝင်မှု သို့မဟုတ် တွေ့ဆုံပွဲတစ်ခုနှင့် ချိတ်ထားပါသည်။',
+  'Plan permanently deleted.': 'အစီအစဉ်ကို အပြီးဖျက်ပြီးပါပြီ။',
+  'Plan moved to Trash.': 'အစီအစဉ်ကို ဖျက်ရန် ဖယ်ထားပြီးပါပြီ။',
+  'Plan restored from Trash.': 'အစီအစဉ်ကို ပြန်ယူပြီးပါပြီ။',
   'Your memberships, visits and attendance in one place.':
     'သင်၏ အသင်းဝင်မှု၊ လက်ကျန်အကြိမ်နှင့် တက်ရောက်မှုများကို ဤနေရာတွင် ကြည့်နိုင်ပါသည်။',
   'Show this QR to staff at your meetup.':

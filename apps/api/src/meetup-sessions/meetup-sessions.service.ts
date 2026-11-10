@@ -158,7 +158,7 @@ export class MeetupSessionsService {
         await tx.$queryRaw`SELECT id FROM plans WHERE id=${input.planId} FOR UPDATE`;
         const plan = await tx.plan.findUnique({ where: { id: input.planId } });
         if (!plan) throw new NotFoundException();
-        if (plan.archived)
+        if (plan.archived || plan.trashedAt)
           conflict(
             'PLAN_ARCHIVED',
             'This plan is archived. Choose an available plan.',

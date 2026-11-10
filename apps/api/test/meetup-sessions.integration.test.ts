@@ -273,6 +273,46 @@ test(
       }).expect(200);
       await send('post', '/admin/sessions', input).expect(409);
       await get('/sessions/' + session.id).expect(200);
+      const trashPlan = (id: string, action: string, version: number) =>
+        send('patch', '/admin/plans/' + id + '/trash', {
+          action,
+          version,
+          reason: 'Trash regression',
+        });
+      await trashPlan(plan.id, 'move', plan.version + 1).expect(200);
+      assert.ok(
+        (await get('/admin/plans?trash=true').expect(200)).body.items.some(
+          (item: { id: string }) => item.id === plan.id,
+        ),
+      );
+      const blocked = await trashPlan(
+        plan.id,
+        'delete',
+        plan.version + 2,
+      ).expect(409);
+      assert.equal(blocked.body.code, 'PLAN_IN_USE');
+      await trashPlan(plan.id, 'restore', plan.version + 2).expect(200);
+      assert.equal(
+        (await get('/admin/plans/' + plan.id).expect(200)).body.archived,
+        true,
+      );
+      const unused = (
+        await send('post', '/admin/plans', {
+          name: 'Unused test plan',
+          description: '',
+          benefits: '',
+          totalVisits: 1,
+          reason: 'Setup',
+        }).expect(200)
+      ).body;
+      await trashPlan(unused.id, 'delete', unused.version).expect(409);
+      await trashPlan(unused.id, 'move', unused.version).expect(200);
+      await send('post', '/admin/sessions', {
+        ...input,
+        planId: unused.id,
+      }).expect(409);
+      await trashPlan(unused.id, 'delete', unused.version + 1).expect(200);
+      await get('/admin/plans/' + unused.id).expect(404);
       // Role demotion also removes access even when assignment rows are retained.
       const another = (
         await send('post', '/admin/plans', {

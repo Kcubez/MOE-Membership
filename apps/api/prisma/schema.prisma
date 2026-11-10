@@ -124,6 +124,7 @@ model Plan {
   benefits       String
   totalVisits    Int
   archived       Boolean         @default(false)
+  trashedAt      DateTime?       @db.Timestamptz(6)
   version        Int             @default(1)
   createdAt      DateTime        @default(now()) @db.Timestamptz(6)
   updatedAt      DateTime        @default(now()) @db.Timestamptz(6)

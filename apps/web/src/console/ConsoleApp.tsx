@@ -18,6 +18,7 @@ import {
   DashboardIcon,
   PersonIcon,
   ReaderIcon,
+  TrashIcon,
   IdCardIcon,
   CalendarIcon,
   Crosshair2Icon,
@@ -77,6 +78,7 @@ const pages: { key: string; label: string; icon: Icon; pending?: boolean }[] = [
     label: 'Attendance',
     icon: CheckCircledIcon,
   },
+  { key: 'trash', label: 'Trash', icon: TrashIcon },
   {
     key: 'reports',
     label: 'Reports & export',
@@ -572,8 +574,10 @@ function Console({
               onNotice={(text) => setNotice({ text, success: true })}
               onSignedOut={signedOut}
             />
-          ) : current.key === 'plans' ? (
+          ) : current.key === 'plans' || current.key === 'trash' ? (
             <Plans
+              key={current.key}
+              trash={current.key === 'trash'}
               onAuthError={authError}
               onNotice={(text) => setNotice({ text, success: true })}
             />

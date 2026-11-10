@@ -1213,6 +1213,12 @@
         },
         "parameters": [
           {
+            "in": "query",
+            "name": "trash",
+            "schema": { "type": "string", "enum": ["true"] },
+            "description": "List only trashed plans. Omit to exclude Trash."
+          },
+          {
             "name": "cursor",
             "in": "query",
             "schema": {
@@ -1697,6 +1703,69 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/plans/{id}/trash": {
+      "patch": {
+        "summary": "Move a plan to Trash, restore it, or delete it permanently",
+        "operationId": "changePlanTrash",
+        "security": [{ "sessionCookie": [] }, { "bearerSession": [] }],
+        "description": "Admin only. Restore preserves the previous availability. Permanent deletion requires a trashed plan with no linked memberships or meetup sessions. All actions require the current version and a reason.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["action", "version", "reason"],
+                "properties": {
+                  "action": {
+                    "type": "string",
+                    "enum": ["move", "restore", "delete"]
+                  },
+                  "version": { "type": "integer", "minimum": 1 },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Action completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["success"],
+                  "properties": {
+                    "success": { "type": "boolean", "enum": [true] }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Invalid input" },
+          "401": { "description": "Authentication required" },
+          "403": { "description": "Admin access required" },
+          "404": { "description": "Plan not found" },
+          "409": {
+            "description": "VERSION_CONFLICT, INVALID_TRASH_STATE, or PLAN_IN_USE"
           }
         }
       }
@@ -4859,6 +4928,7 @@
             "type": "integer",
             "minimum": 1
           },
+          "trashedAt": { "type": ["string", "null"], "format": "date-time" },
           "archived": {
             "type": "boolean"
           },
@@ -4877,6 +4947,7 @@
           "_count": {
             "type": "object",
             "properties": {
+              "meetupSessions": { "type": "integer" },
               "memberships": {
                 "type": "integer"
               }

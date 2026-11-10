@@ -30,6 +30,7 @@ The handoff assigns the shared backend/API and responsive Admin/Staff web/scanne
 
 - Plan templates contain name, description/benefits, and total visits of at least one. No start/end dates or duration.
 - Archiving a plan prevents new use while retaining previous memberships and history.
+- Admin can move plans to Trash and restore their prior availability. Only plans without linked memberships or meetup sessions can be permanently deleted. Plan Trash actions retain audit entries.
 - Admin selects an existing user/plan and explicitly supplies both membership dates. Never autofill or calculate dates; end date cannot precede start date.
 - Copy the plan quota into the membership at assignment; initially used visits are zero. Editing a plan does not change assigned quotas/dates.
 - Membership edits require reason, actor, timestamp, before/after values. Total visits cannot fall below effective used visits.
