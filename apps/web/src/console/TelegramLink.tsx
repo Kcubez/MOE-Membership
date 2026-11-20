@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { ApiError, call, consoleApi, messageOf } from './client';
+import { ApiError, call, consoleApi, messageOf, type Identity } from './client';
 import { Alert, Brand, PasswordInput } from './Shared';
 import { LanguageContext, useText, type Language } from './i18n';
 
@@ -10,6 +10,8 @@ type TelegramWindow = Window & {
 function LinkForm() {
   const t = useText();
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<Identity>();
+  const [sessionLoading, setSessionLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [linked, setLinked] = useState<{ delivered: boolean }>();
@@ -27,6 +29,37 @@ function LinkForm() {
     return () => script.remove();
   }, []);
 
+  useEffect(() => {
+    const controller = new AbortController();
+    consoleApi
+      .session(controller.signal)
+      .then(({ user }) => setUser(user))
+      .catch((error) => {
+        if (
+          !controller.signal.aborted &&
+          !(error instanceof ApiError && error.status === 401)
+        )
+          setError(messageOf(error));
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setSessionLoading(false);
+      });
+    return () => controller.abort();
+  }, []);
+
+  async function switchAccount() {
+    setBusy(true);
+    setError('');
+    try {
+      await consoleApi.logout();
+      setUser(undefined);
+    } catch (error) {
+      setError(messageOf(error));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!app?.initData || busy) return;
@@ -34,13 +67,16 @@ function LinkForm() {
     const data = new FormData(form);
     setBusy(true);
     setError('');
-    let signingIn = true;
+    let signingIn = !user;
     try {
-      await consoleApi.login(
-        String(data.get('phone') || '').trim(),
-        String(data.get('password') || ''),
-        'member',
-      );
+      if (!user) {
+        const result = await consoleApi.login(
+          String(data.get('phone') || '').trim(),
+          String(data.get('password') || ''),
+          'member',
+        );
+        setUser(result.user);
+      }
       signingIn = false;
       form.reset();
       const requested = new URLSearchParams(window.location.search).get(
@@ -62,6 +98,10 @@ function LinkForm() {
           signingIn
             ? 'Unable to sign in. Check your phone number and password, then try again.'
             : 'Reopen this link from the MOE bot and try again.',
+        );
+      } else if (error instanceof ApiError && error.status === 409) {
+        setError(
+          'This Telegram or MOE account is already linked. Use Logout in the previously linked bot chat, then try again.',
         );
       } else {
         setError(messageOf(error));
@@ -88,38 +128,71 @@ function LinkForm() {
             {t('Back to bot')}
           </button>
         </>
-      ) : loading ? (
+      ) : loading || sessionLoading ? (
         <p role="status">{t('Loading…')}</p>
       ) : !app?.initData ? (
         <Alert>{t('Open this link from the MOE Telegram bot.')}</Alert>
       ) : (
         <form className="c-form" onSubmit={submit}>
-          <p>{t('Sign in once to link this Telegram account.')}</p>
-          <label>
-            {t('Phone number')}
-            <input
-              name="phone"
-              type="tel"
-              autoComplete="username"
-              placeholder="09… / +959…"
-              required
-              maxLength={40}
-            />
-          </label>
-          <label>
-            {t('Password')}
-            <PasswordInput
-              name="password"
-              autoComplete="current-password"
-              required
-              minLength={8}
-              maxLength={128}
-            />
-          </label>
+          {user ? (
+            <p>
+              {t('Link this Telegram account to')} <strong>{user.name}</strong>?
+            </p>
+          ) : (
+            <p>{t('Sign in once to link this Telegram account.')}</p>
+          )}
+          {!user && (
+            <>
+              <label>
+                {t('Phone number')}
+                <input
+                  name="phone"
+                  type="tel"
+                  autoComplete="username"
+                  placeholder="09… / +959…"
+                  required
+                  maxLength={40}
+                />
+              </label>
+              <label>
+                {t('Password')}
+                <PasswordInput
+                  name="password"
+                  autoComplete="current-password"
+                  required
+                  minLength={8}
+                  maxLength={128}
+                />
+              </label>
+            </>
+          )}
+          {user && user.role !== 'member' && (
+            <Alert>{t('Use a member account to link Telegram.')}</Alert>
+          )}
           {error && <Alert>{t(error)}</Alert>}
-          <button className="c-button primary" disabled={busy} aria-busy={busy}>
-            {t(busy ? 'Signing in…' : 'Sign in and link')}
+          <button
+            className="c-button primary"
+            disabled={
+              busy ||
+              (!!user && (user.role !== 'member' || user.mustChangePassword))
+            }
+            aria-busy={busy}
+          >
+            {t(busy ? 'Loading…' : user ? 'Link account' : 'Sign in and link')}
           </button>
+          {user && (
+            <button
+              type="button"
+              className="c-button"
+              disabled={busy}
+              onClick={switchAccount}
+            >
+              {t('Use another account')}
+            </button>
+          )}
+          {user?.mustChangePassword && (
+            <Alert>{t('Change your temporary password to continue.')}</Alert>
+          )}
         </form>
       )}
     </section>
