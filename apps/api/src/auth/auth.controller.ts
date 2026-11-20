@@ -25,7 +25,7 @@ const login = z.union([
     .object({
       email: consoleEmail,
       password: z.string().min(8).max(128),
-      portal: z.literal('console'),
+      portal: z.literal('console').optional(),
     })
     .strict(),
 ]);

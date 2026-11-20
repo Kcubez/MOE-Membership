@@ -57,7 +57,7 @@ Use real PostgreSQL integration tests for uniqueness, overlap, double scans, dif
 
 ## Better Auth integration — implemented increment
 
-Public endpoints are `/api/v1/auth/signup`, `/login`, `/session`, and `/logout`. Members use phone/password for signup and login (signup also requires name). Admin and Staff sign in with email/password and send `portal: "console"`. A phone login can only issue a Member session. Phone numbers are validated as Myanmar numbers and normalized to +95. No OTP or verification service is enabled.
+Public endpoints are `/api/v1/auth/signup`, `/login`, `/session`, and `/logout`. Members use phone/password for signup and login (signup also requires name). Admin and Staff sign in with email/password and can optionally send `portal: "console"`. A phone login can only issue a Member session. Phone numbers are validated as Myanmar numbers and normalized to +95. No OTP or verification service is enabled.
 
 Better Auth's email/password credential engine uses a deterministic internal alias `<canonical-digits>@phone.moe.invalid`; this is not a real email, is never verified, and is not exposed by public responses. The actual phone is stored uniquely. Raw Better Auth email/OTP/password-reset routes are not mounted. No email is requested from members. Better Auth owns password hashing (its default scrypt), accounts, sessions, and database-backed rate limits.
 

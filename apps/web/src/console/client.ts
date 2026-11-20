@@ -137,11 +137,15 @@ export const consoleApi = {
     call<{ user: Identity }>('/auth/signup', { method: 'POST', body }),
   session: (signal?: AbortSignal) =>
     call<{ user: Identity }>('/auth/session', { signal }),
-  login: (identifier: string, password: string, portal: 'member' | 'console') =>
+  login: (
+    identifier: string,
+    password: string,
+    portal?: 'member' | 'console',
+  ) =>
     call<{ user: Identity }>('/auth/login', {
       method: 'POST',
       body: {
-        ...(portal === 'console' && identifier.includes('@')
+        ...(identifier.includes('@')
           ? { email: identifier }
           : { phone: identifier }),
         password,

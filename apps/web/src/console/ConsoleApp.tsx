@@ -90,6 +90,7 @@ const pages: { key: string; label: string; icon: Icon; pending?: boolean }[] = [
 ];
 const aliases: Record<string, string> = {
   '/register': '/signup',
+  '/console/login': '/login',
   '/console/accounts': '/console/users',
   '/console/audit': '/console/audit-logs',
   '/console/overview': '/console',
@@ -242,13 +243,10 @@ function Console({
         target = requested && memberSection(requested) ? requested : '/member';
       }
     } else if (path === '/' || legacy)
-      target = consoleRole ? '/console' : legacy ? '/console/login' : '/login';
+      target = consoleRole ? '/console' : '/login';
     else if (!known) return;
     else if (!user && !['/login', '/console/login', '/signup'].includes(path))
-      target =
-        (path.startsWith('/console') ? '/console/login' : '/login') +
-        '?returnTo=' +
-        encodeURIComponent(path);
+      target = '/login' + '?returnTo=' + encodeURIComponent(path);
     else if (
       consoleRole &&
       ['/login', '/console/login', '/signup'].includes(path)
@@ -278,9 +276,7 @@ function Console({
   const changed = useCallback(() => setRevision((value) => value + 1), []);
   const signedOut = useCallback((text: string) => {
     setUser(null);
-    const loginPath = canonicalPath().startsWith('/console')
-      ? '/console/login'
-      : '/login';
+    const loginPath = '/login';
     window.history.replaceState(null, '', loginPath);
     setAddress(loginPath);
     setPage(readPage());
@@ -415,9 +411,6 @@ function Console({
         ) : (
           <SignIn
             key={page}
-            portal={
-              canonicalPath().startsWith('/console') ? 'console' : 'member'
-            }
             notice={notice}
             onSignedIn={(value) => {
               setNotice(undefined);
@@ -661,17 +654,14 @@ function Console({
   );
 }
 function SignIn({
-  portal,
   notice,
   onSignedIn,
 }: {
-  portal: 'member' | 'console';
   notice?: { text: string; success: boolean };
   onSignedIn: (user: Identity) => void;
 }) {
   const t = useText();
   const [busy, setBusy] = useState(false);
-  const usesEmail = portal === 'console';
   const [error, setError] = useState('');
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -682,16 +672,13 @@ function SignIn({
       const result = await consoleApi.login(
         String(form.get('identifier') || '').trim(),
         String(form.get('password') || ''),
-        portal,
       );
       onSignedIn(result.user);
     } catch (error) {
       setError(
         error instanceof ApiError && error.status === 401
           ? t(
-              usesEmail
-                ? 'Unable to sign in. Check your email address and password, then try again.'
-                : 'Unable to sign in. Check your phone number and password, then try again.',
+              'Unable to sign in. Check your phone number or email and password, then try again.',
             )
           : messageOf(error),
       );
@@ -703,26 +690,21 @@ function SignIn({
     <section className="c-auth-card">
       <Brand />
       <p className="c-eyebrow">MOE MEMBERSHIP SYSTEM</p>
-      <h1>{t(portal === 'console' ? 'Console sign in' : 'Member sign in')}</h1>
+      <h1>{t('Sign in')}</h1>
       <p className="c-subtitle">
-        {t(
-          usesEmail
-            ? 'Sign in with your email address and password.'
-            : 'Sign in with your phone number and password.',
-        )}
+        {t('Sign in with your phone number or email and password.')}
       </p>
       {notice && <Alert success={notice.success}>{t(notice.text)}</Alert>}
       <form className="c-form" onSubmit={submit}>
         <label>
-          {t(usesEmail ? 'Email address' : 'Phone number')}
+          {t('Phone number or email')}
           <input
-            key={usesEmail ? 'email' : 'phone'}
             name="identifier"
-            type={usesEmail ? 'email' : 'tel'}
+            type="text"
             autoComplete="username"
-            placeholder={usesEmail ? undefined : '09… / +959…'}
+            placeholder="09… / name@example.com"
             required
-            maxLength={usesEmail ? 254 : 40}
+            maxLength={254}
           />
         </label>
         <label>
@@ -748,23 +730,15 @@ function SignIn({
           {!busy && <ArrowRightIcon />}
         </button>
       </form>
-      {portal === 'console' && (
+      <>
         <p className="c-auth-note">
-          <LockClosedIcon />
-          {t('For MOE administrators and staff.')}
+          {t('New to MOE? Create a member account to get started.')}
         </p>
-      )}
-      {portal === 'member' && (
-        <>
-          <p className="c-auth-note">
-            {t('New to MOE? Create a member account to get started.')}
-          </p>
-          <a className="c-member-link" href="/signup">
-            {t('Create member account')} <ArrowRightIcon />
-          </a>
-        </>
-      )}
-      {portal === 'member' && memberAppUrl() && (
+        <a className="c-member-link" href="/signup">
+          {t('Create member account')} <ArrowRightIcon />
+        </a>
+      </>
+      {memberAppUrl() && (
         <a className="c-member-link" href={memberAppUrl()}>
           {t('Open member app')} <ArrowRightIcon />
         </a>

@@ -473,7 +473,7 @@ test(
       const staffLogin = await api
         .post('/api/v1/auth/login')
         .set('X-MOE-Client', 'mobile')
-        .send({ email: staffEmail, password: staffPassword, portal: 'console' })
+        .send({ email: staffEmail, password: staffPassword })
         .expect(200);
       assert.equal(staffLogin.body.user.role, 'staff');
       assert.equal(staffLogin.body.user.mustChangePassword, true);

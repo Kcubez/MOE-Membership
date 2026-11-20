@@ -142,7 +142,7 @@ Use `postman/collections/accounts.postman_collection.json` only against an isola
 
 ## Web console
 
-Open `http://127.0.0.1:5173/console` after starting the API and web dev servers. Admin and Staff sign in at `/console/login`. Members sign in at `/login` and use `/member`.
+Open `http://127.0.0.1:5173/console` after starting the API and web dev servers. Admin and Staff sign in at `/login`. Members sign in at `/login` and use `/member`.
 
 The console references the senior-provided MOE prototype's sidebar, logo and orange/neutral styling, but reads/writes the real shared API. Admins can view live account counts, search/filter/page accounts, create Member/Staff accounts, edit access, and reset passwords after manual verification. All signed-in roles can change their password. Temporary-password accounts must replace their password before opening the workspace; successful password changes require a fresh sign-in. Staff/Member views do not expose Admin controls.
 
@@ -241,6 +241,6 @@ Membership assignment/renewal recipients must currently have Member role and be 
 
 ## Console email sign-in rollout
 
-Admin and Staff sign in with an email and password at `/console/login`. Gmail and company addresses are accepted. Admin-created Staff accounts require an email and a temporary password. The owner changes the password at first sign-in. Member login and signup still require a Myanmar phone number.
+Admin and Staff sign in with an email and password at `/login`. Gmail and company addresses are accepted. Admin-created Staff accounts require an email and a temporary password. The owner changes the password at first sign-in. Member login and signup still require a Myanmar phone number.
 
 Apply database migrations before bootstrapping the first Admin with an email. For older databases with phone-only Admin or Staff accounts, assign each existing account its verified email by setting `CONSOLE_ACCOUNT_PHONE` and `CONSOLE_ACCOUNT_EMAIL` locally and running `npm run admin:set-console-email -w @moe/api` before deploying the email-only console. This keeps the account ID and password, and revokes existing sessions.

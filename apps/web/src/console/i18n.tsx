@@ -2,6 +2,11 @@ import { createContext, useContext } from 'react';
 export type Language = 'en' | 'my';
 export const LanguageContext = createContext<Language>('en');
 const my: Record<string, string> = {
+  'Phone number or email': 'ဖုန်းနံပါတ် သို့မဟုတ် အီးမေးလ်',
+  'Sign in with your phone number or email and password.':
+    'ဖုန်းနံပါတ် သို့မဟုတ် အီးမေးလ်နှင့် စကားဝှက်ဖြင့် ဝင်ပါ။',
+  'Unable to sign in. Check your phone number or email and password, then try again.':
+    'ဝင်၍မရပါ။ ဖုန်းနံပါတ် သို့မဟုတ် အီးမေးလ်နှင့် စကားဝှက်ကို စစ်ပြီး ပြန်ကြိုးစားပါ။',
   Trash: 'အမှိုက်ပုံး',
   'Restore or permanently delete plans moved to Trash.':
     'အမှိုက်ပုံးထဲရှိ အစီအစဉ်များကို ပြန်ယူနိုင်သည် သို့မဟုတ် အပြီးဖျက်နိုင်သည်။',
