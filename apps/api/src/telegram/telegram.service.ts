@@ -148,7 +148,12 @@ export class TelegramService {
     return { ok: true };
   }
 
-  async link(actor: Actor, initData: string, action?: Action) {
+  async link(
+    actor: Actor,
+    initData: string,
+    action?: Action,
+    replaceExisting = false,
+  ) {
     const id = verifyTelegramUser(initData, config().token);
     try {
       await this.db.client.$transaction(async (tx) => {
@@ -172,7 +177,23 @@ export class TelegramService {
           where: { telegramId: id },
         });
         if (existing && existing.userId !== user.id)
-          throw new ConflictException('Telegram is already linked.');
+          throw new ConflictException({
+            code: 'TELEGRAM_ALREADY_LINKED',
+            message:
+              'This Telegram account is linked to another MOE account. Use another MOE account or disconnect its current link first.',
+          });
+        const memberLink = await tx.telegramMemberLink.findUnique({
+          where: { userId: user.id },
+        });
+        if (memberLink && memberLink.telegramId !== id) {
+          if (!replaceExisting)
+            throw new ConflictException({
+              code: 'MEMBER_TELEGRAM_ALREADY_LINKED',
+              message:
+                'Your MOE account has another Telegram connection. Confirm replacement to connect this Telegram account.',
+            });
+          await tx.telegramMemberLink.delete({ where: { userId: user.id } });
+        }
         if (existing) {
           await tx.telegramMemberLink.update({
             where: { telegramId: id },
@@ -193,9 +214,11 @@ export class TelegramService {
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002'
       )
-        throw new ConflictException(
-          'An account is already linked. Disconnect it before linking again.',
-        );
+        throw new ConflictException({
+          code: 'TELEGRAM_LINK_CONFLICT',
+          message:
+            'The Telegram connection changed. Reopen the linking page and try again.',
+        });
       throw error;
     }
     if (!action) return { delivered: false };

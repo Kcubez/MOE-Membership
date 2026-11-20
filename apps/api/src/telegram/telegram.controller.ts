@@ -43,10 +43,16 @@ export class TelegramController {
         .object({
           initData: z.string().min(1).max(8192),
           action: telegramAction.optional(),
+          replaceExisting: z.boolean().optional(),
         })
         .strict(),
       body,
     );
-    return this.telegram.link(req.actor, input.initData, input.action);
+    return this.telegram.link(
+      req.actor,
+      input.initData,
+      input.action,
+      input.replaceExisting,
+    );
   }
 }

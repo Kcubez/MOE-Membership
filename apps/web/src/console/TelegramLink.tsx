@@ -13,6 +13,7 @@ function LinkForm() {
   const [user, setUser] = useState<Identity>();
   const [sessionLoading, setSessionLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [replaceExisting, setReplaceExisting] = useState(false);
   const [error, setError] = useState('');
   const [linked, setLinked] = useState<{ delivered: boolean }>();
   const app = (window as TelegramWindow).Telegram?.WebApp;
@@ -53,6 +54,7 @@ function LinkForm() {
     try {
       await consoleApi.logout();
       setUser(undefined);
+      setReplaceExisting(false);
     } catch (error) {
       setError(messageOf(error));
     } finally {
@@ -89,7 +91,7 @@ function LinkForm() {
       setLinked(
         await call<{ delivered: boolean }>('/telegram/link', {
           method: 'POST',
-          body: { initData: app.initData, action },
+          body: { initData: app.initData, action, replaceExisting },
         }),
       );
     } catch (error) {
@@ -99,9 +101,20 @@ function LinkForm() {
             ? 'Unable to sign in. Check your phone number and password, then try again.'
             : 'Reopen this link from the MOE bot and try again.',
         );
-      } else if (error instanceof ApiError && error.status === 409) {
+      } else if (
+        error instanceof ApiError &&
+        error.code === 'MEMBER_TELEGRAM_ALREADY_LINKED'
+      ) {
+        setReplaceExisting(true);
         setError(
-          'This Telegram or MOE account is already linked. Use Logout in the previously linked bot chat, then try again.',
+          'Your MOE account is connected to another Telegram account. Replace that connection to use this account. The previous Telegram account will lose access.',
+        );
+      } else if (
+        error instanceof ApiError &&
+        error.code === 'TELEGRAM_ALREADY_LINKED'
+      ) {
+        setError(
+          'This Telegram account is linked to another MOE account. Use another MOE account or Logout in this bot chat first.',
         );
       } else {
         setError(messageOf(error));
@@ -178,7 +191,15 @@ function LinkForm() {
             }
             aria-busy={busy}
           >
-            {t(busy ? 'Loading…' : user ? 'Link account' : 'Sign in and link')}
+            {t(
+              busy
+                ? 'Loading…'
+                : user
+                  ? replaceExisting
+                    ? 'Replace connection and link'
+                    : 'Link account'
+                  : 'Sign in and link',
+            )}
           </button>
           {user && (
             <button

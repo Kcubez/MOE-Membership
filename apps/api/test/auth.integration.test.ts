@@ -269,6 +269,43 @@ test(
         assert.match(replies.at(-1) as string, /no active plans/);
         await webhook('Attendance history').expect(200);
         assert.match(replies.at(-1) as string, /No attendance/);
+        // Same identity is idempotent; a different Telegram requires consent.
+        await link(params + '&hash=' + hash).expect(200);
+        const otherParams = new URLSearchParams({
+          auth_date: params.get('auth_date')!,
+          user: JSON.stringify({ id: 456 }),
+        });
+        const otherHash = createHmac('sha256', key)
+          .update(
+            'auth_date=' +
+              otherParams.get('auth_date') +
+              '\nuser=' +
+              otherParams.get('user'),
+          )
+          .digest('hex');
+        const move = (replaceExisting = false) =>
+          api
+            .post('/api/v1/telegram/link')
+            .set('Origin', 'http://localhost:5173')
+            .set('Cookie', cookie)
+            .send({
+              initData: otherParams + '&hash=' + otherHash,
+              replaceExisting,
+            });
+        const conflict = await move().expect(409);
+        assert.equal(conflict.body.code, 'MEMBER_TELEGRAM_ALREADY_LINKED');
+        await move(true).expect(200);
+        await webhook('Show my QR code').expect(200);
+        assert.match(replies.at(-1) as string, /Link MOE account/);
+        const oldConnection = await link(params + '&hash=' + hash).expect(409);
+        assert.equal(oldConnection.body.code, 'MEMBER_TELEGRAM_ALREADY_LINKED');
+        // Reconnect the original identity explicitly, then exercise Logout.
+        await api
+          .post('/api/v1/telegram/link')
+          .set('Origin', 'http://localhost:5173')
+          .set('Cookie', cookie)
+          .send({ initData: params + '&hash=' + hash, replaceExisting: true })
+          .expect(200);
         await webhook('🚪 Logout').expect(200);
         await webhook('Show my QR code').expect(200);
         assert.match(replies.at(-1) as string, /Link MOE account/);

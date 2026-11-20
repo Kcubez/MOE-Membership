@@ -74,6 +74,11 @@
                   "action": {
                     "type": "string",
                     "enum": ["qr", "plan", "history"]
+                  },
+                  "replaceExisting": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Explicitly replace the authenticated member\u2019s previous Telegram connection. Never replaces another member\u2019s connection."
                   }
                 }
               }
@@ -103,7 +108,7 @@
             "description": "Member access required"
           },
           "409": {
-            "description": "Account already linked elsewhere"
+            "description": "TELEGRAM_ALREADY_LINKED: Telegram belongs to another member; MEMBER_TELEGRAM_ALREADY_LINKED: member has another Telegram connection; TELEGRAM_LINK_CONFLICT: concurrent connection change. No identities disclosed."
           }
         }
       }
@@ -247,8 +252,12 @@
             "application/json": {
               "schema": {
                 "oneOf": [
-                  { "$ref": "#/components/schemas/Credentials" },
-                  { "$ref": "#/components/schemas/ConsoleCredentials" }
+                  {
+                    "$ref": "#/components/schemas/Credentials"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ConsoleCredentials"
+                  }
                 ]
               }
             }
@@ -655,13 +664,25 @@
                 "oneOf": [
                   {
                     "required": ["phone"],
-                    "properties": { "role": { "enum": ["member"] } },
-                    "not": { "required": ["email"] }
+                    "properties": {
+                      "role": {
+                        "enum": ["member"]
+                      }
+                    },
+                    "not": {
+                      "required": ["email"]
+                    }
                   },
                   {
                     "required": ["email"],
-                    "properties": { "role": { "enum": ["staff"] } },
-                    "not": { "required": ["phone"] }
+                    "properties": {
+                      "role": {
+                        "enum": ["staff"]
+                      }
+                    },
+                    "not": {
+                      "required": ["phone"]
+                    }
                   }
                 ],
                 "properties": {
@@ -673,7 +694,10 @@
                   "phone": {
                     "type": "string"
                   },
-                  "email": { "type": "string", "format": "email" },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
                   "temporaryPassword": {
                     "type": "string",
                     "minLength": 8,
@@ -1215,7 +1239,10 @@
           {
             "in": "query",
             "name": "trash",
-            "schema": { "type": "string", "enum": ["true"] },
+            "schema": {
+              "type": "string",
+              "enum": ["true"]
+            },
             "description": "List only trashed plans. Omit to exclude Trash."
           },
           {
@@ -1711,14 +1738,23 @@
       "patch": {
         "summary": "Move a plan to Trash, restore it, or delete it permanently",
         "operationId": "changePlanTrash",
-        "security": [{ "sessionCookie": [] }, { "bearerSession": [] }],
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerSession": []
+          }
+        ],
         "description": "Admin only. Restore preserves the previous availability. Permanent deletion requires a trashed plan with no linked memberships or meetup sessions. All actions require the current version and a reason.",
         "parameters": [
           {
             "in": "path",
             "name": "id",
             "required": true,
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -1734,7 +1770,10 @@
                     "type": "string",
                     "enum": ["move", "restore", "delete"]
                   },
-                  "version": { "type": "integer", "minimum": 1 },
+                  "version": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
                   "reason": {
                     "type": "string",
                     "minLength": 1,
@@ -1754,16 +1793,27 @@
                   "type": "object",
                   "required": ["success"],
                   "properties": {
-                    "success": { "type": "boolean", "enum": [true] }
+                    "success": {
+                      "type": "boolean",
+                      "enum": [true]
+                    }
                   }
                 }
               }
             }
           },
-          "400": { "description": "Invalid input" },
-          "401": { "description": "Authentication required" },
-          "403": { "description": "Admin access required" },
-          "404": { "description": "Plan not found" },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Admin access required"
+          },
+          "404": {
+            "description": "Plan not found"
+          },
           "409": {
             "description": "VERSION_CONFLICT, INVALID_TRASH_STATE, or PLAN_IN_USE"
           }
@@ -4646,9 +4696,20 @@
         "additionalProperties": false,
         "required": ["email", "password"],
         "properties": {
-          "email": { "type": "string", "format": "email", "maxLength": 254 },
-          "password": { "type": "string", "minLength": 8, "maxLength": 128 },
-          "portal": { "type": "string", "enum": ["console"] }
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 254
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 128
+          },
+          "portal": {
+            "type": "string",
+            "enum": ["console"]
+          }
         }
       },
       "Credentials": {
@@ -4928,7 +4989,10 @@
             "type": "integer",
             "minimum": 1
           },
-          "trashedAt": { "type": ["string", "null"], "format": "date-time" },
+          "trashedAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
           "archived": {
             "type": "boolean"
           },
@@ -4947,7 +5011,9 @@
           "_count": {
             "type": "object",
             "properties": {
-              "meetupSessions": { "type": "integer" },
+              "meetupSessions": {
+                "type": "integer"
+              },
               "memberships": {
                 "type": "integer"
               }
