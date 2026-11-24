@@ -1,4 +1,4 @@
-export type Role = 'admin' | 'staff' | 'member';
+export type Role = 'super_admin' | 'admin' | 'member';
 export type Identity = {
   id: string;
   name: string;
@@ -72,13 +72,13 @@ export async function call<T>(
         INVALID_MEMBER_ROLE:
           'Memberships can only be assigned or renewed for member accounts.',
         BACKFILL_DATE_INVALID:
-          'Backfill requires a historical session and matching attendance date in Myanmar time.',
+          'Backfill requires a historical event and matching attendance date in Myanmar time.',
         INVALID_QR: 'This QR is invalid or has been replaced.',
         ACCOUNT_DISABLED: 'This account cannot check in.',
-        SESSION_CLOSED: 'This session is closed.',
+        SESSION_CLOSED: 'This event is closed.',
         SESSION_DATE_MISMATCH:
           'Live check-in is only available on the meetup date.',
-        NO_ELIGIBLE_MEMBERSHIP: 'No eligible membership for this session.',
+        NO_ELIGIBLE_MEMBERSHIP: 'No eligible membership for this event.',
         VISITS_EXHAUSTED: 'No visits remain for this membership.',
         IDEMPOTENCY_CONFLICT:
           'This request ID was already used for a different operation.',
@@ -86,12 +86,12 @@ export async function call<T>(
           'The period cannot exclude existing attendance.',
 
         INVALID_STAFF:
-          'Choose enabled staff accounts only. Clear unavailable staff and refresh the staff list.',
+          'Choose enabled Admin accounts only. Clear unavailable admins and refresh the list.',
         MEMBERSHIP_OVERLAP:
-          'This member already has an overlapping period for this plan.',
+          'This member already has an overlapping period for this program.',
         PLAN_CHANGED:
-          'The plan changed. Close this dialog, refresh and review its quota.',
-        PLAN_ARCHIVED: 'This plan is archived. Choose an available plan.',
+          'The program changed. Close this dialog, refresh and review it.',
+        PLAN_ARCHIVED: 'This program is archived. Choose an available program.',
         VERSION_CONFLICT:
           'This record changed. Close this dialog and refresh before editing.',
         QUOTA_BELOW_USED:
@@ -178,7 +178,7 @@ export const consoleApi = {
     phone?: string;
     email?: string;
     temporaryPassword: string;
-    role: 'member' | 'staff';
+    role: 'member' | 'admin';
   }) =>
     call<{ user: Account; created: boolean }>('/admin/users', {
       method: 'POST',
@@ -192,7 +192,7 @@ export const consoleApi = {
   access: (
     id: string,
     enabled: boolean,
-    role: 'member' | 'staff',
+    role: 'member' | 'admin',
     reason: string,
   ) =>
     call<{ user: Account }>(`/admin/users/${encodeURIComponent(id)}/access`, {

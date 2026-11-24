@@ -39,7 +39,7 @@
         "url": "{{baseUrl}}/api/v1/auth/signup",
         "body": {
           "mode": "raw",
-          "raw": "{\"name\": \"API Test Member\", \"phone\": \"{{testPhone}}\", \"password\": \"{{testPassword}}\"}",
+          "raw": "{\n  \"name\": \"API Test Member\",\n  \"phone\": \"{{testPhone}}\",\n  \"password\": \"{{testPassword}}\"\n}",
           "options": {
             "raw": {
               "language": "json"

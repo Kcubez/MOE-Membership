@@ -66,9 +66,7 @@ export type SessionCreate = {
 export class MeetupSessionsService {
   constructor(@Inject(PrismaService) private readonly db: PrismaService) {}
   private scope(actor: Actor): Prisma.MeetupSessionWhereInput {
-    if (actor.role === 'admin') return {};
-    if (actor.role === 'staff')
-      return { assignments: { some: { userId: actor.id } } };
+    if (['super_admin', 'admin'].includes(actor.role)) return {};
     throw new ForbiddenException();
   }
   async list(actor: Actor, query: SessionQuery) {
@@ -104,7 +102,9 @@ export class MeetupSessionsService {
         ...select,
         assignments: {
           ...select.assignments,
-          ...(actor.role === 'admin' ? {} : { where: { userId: actor.id } }),
+          ...(['super_admin', 'admin'].includes(actor.role)
+            ? {}
+            : { where: { userId: actor.id } }),
         },
       },
       orderBy: { id: 'asc' },
@@ -114,7 +114,9 @@ export class MeetupSessionsService {
     return {
       items: items
         .slice(0, query.limit)
-        .map((item) => view(item, actor.role === 'admin')),
+        .map((item) =>
+          view(item, ['super_admin', 'admin'].includes(actor.role)),
+        ),
       nextCursor:
         items.length > query.limit ? items[query.limit - 1]!.id : null,
     };
@@ -126,12 +128,14 @@ export class MeetupSessionsService {
         ...select,
         assignments: {
           ...select.assignments,
-          ...(actor.role === 'admin' ? {} : { where: { userId: actor.id } }),
+          ...(['super_admin', 'admin'].includes(actor.role)
+            ? {}
+            : { where: { userId: actor.id } }),
         },
       },
     });
     if (!item) throw new NotFoundException();
-    return view(item, actor.role === 'admin');
+    return view(item, ['super_admin', 'admin'].includes(actor.role));
   }
   private async lockStaff(
     tx: Prisma.TransactionClient,
@@ -142,7 +146,7 @@ export class MeetupSessionsService {
       await tx.$queryRaw`SELECT id FROM moe_auth_user WHERE id=${id} FOR UPDATE`;
     const admin = await assertWrite(tx, actor);
     const count = await tx.authUser.count({
-      where: { id: { in: ids }, role: 'staff', enabled: true },
+      where: { id: { in: ids }, role: 'admin', enabled: true },
     });
     if (count !== ids.length)
       conflict(
@@ -284,7 +288,7 @@ export class MeetupSessionsService {
     );
   }
   async history(actor: Actor, id: string) {
-    if (actor.role !== 'admin') throw new ForbiddenException();
+    if (actor.role !== 'super_admin') throw new ForbiddenException();
     await this.get(actor, id);
     return {
       items: await this.db.client.domainAudit.findMany({

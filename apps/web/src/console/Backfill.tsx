@@ -63,6 +63,20 @@ export function Backfill({
     controller = useRef<AbortController | undefined>(undefined);
   useEffect(() => () => controller.current?.abort(), []);
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setApplied(search.trim());
+      setUserCursor(undefined);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [search]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSessionApplied(sessionSearch.trim());
+      setSessionCursor(undefined);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [sessionSearch]);
+  useEffect(() => {
     const c = new AbortController();
     setLoadingSessions(true);
     setSessions([]);
@@ -195,7 +209,7 @@ export function Backfill({
             <dd>
               {result.member.name} · {result.member.memberNumber}
             </dd>
-            <dt>{t('Plan / session')}</dt>
+            <dt>{t('Program / event')}</dt>
             <dd>
               {result.plan.name} · {result.session.name}
             </dd>
@@ -250,7 +264,7 @@ export function Backfill({
               />
             </label>
             <label>
-              {t('Search sessions')}
+              {t('Search events')}
               <input
                 value={sessionSearch}
                 onChange={(e) => setSessionSearch(e.target.value)}
@@ -266,7 +280,7 @@ export function Backfill({
                   setSessionCursor(undefined);
                 }}
               >
-                {t('Find sessions')}
+                {t('Find events')}
               </button>{' '}
               <button
                 type="button"
@@ -274,20 +288,20 @@ export function Backfill({
                 disabled={!sessionNext || loadingSessions}
                 onClick={() => setSessionCursor(sessionNext!)}
               >
-                {t('More sessions')}
+                {t('More events')}
               </button>
             </div>
             <label>
-              {t('Session')}
+              {t('Event')}
               <Select
-                aria-label={t('Session')}
+                aria-label={t('Event')}
                 required
                 disabled={loadingSessions}
                 value={sessionId}
                 onValueChange={(value) => setSessionId(value)}
               >
                 <option value="">
-                  {t(loadingSessions ? 'Loading…' : 'Choose a session')}
+                  {t(loadingSessions ? 'Loading…' : 'Choose a event')}
                 </option>
                 {sessions.map((s) => (
                   <option key={s.id} value={s.id}>
@@ -298,9 +312,7 @@ export function Backfill({
             </label>
             {!loadingSessions && !sessions.length && (
               <p role="status">
-                {t(
-                  'No sessions found for this date. Adjust the date or search.',
-                )}
+                {t('No events found for this date. Adjust the date or search.')}
               </p>
             )}
             <label>
@@ -374,7 +386,7 @@ export function Backfill({
             </label>
             <p>
               {t(
-                'Eligibility uses the selected historical date and current remaining visits. Closed sessions are allowed.',
+                'Eligibility uses the selected historical date and current remaining visits. Closed events are allowed.',
               )}
             </p>
           </fieldset>

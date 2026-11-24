@@ -20,7 +20,7 @@ import { useText } from './i18n';
 type Action =
   | { kind: 'assign' }
   | { kind: 'edit' | 'renew' | 'cancel' | 'audit'; item: Membership };
-export function Memberships({ onAuthError, onNotice }: CatalogProps) {
+export function Memberships({ onAuthError, onNotice, canAudit }: CatalogProps) {
   const t = useText();
   const [search, setSearch] = useState('');
   const [applied, setApplied] = useState('');
@@ -33,6 +33,14 @@ export function Memberships({ onAuthError, onNotice }: CatalogProps) {
   const [cursors, setCursors] = useState<(string | undefined)[]>([undefined]);
   const [action, setAction] = useState<Action>();
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setApplied(search.trim());
+      setPage(0);
+      setCursors([undefined]);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [search]);
+  useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
     setError('');
@@ -41,7 +49,9 @@ export function Memberships({ onAuthError, onNotice }: CatalogProps) {
         { search: applied, status, cursor: cursors[page] },
         controller.signal,
       )
-      .then(setData)
+      .then((result) => {
+        if (!controller.signal.aborted) setData(result);
+      })
       .catch((error) => {
         if (!controller.signal.aborted) {
           setError(messageOf(error));
@@ -74,7 +84,7 @@ export function Memberships({ onAuthError, onNotice }: CatalogProps) {
           onClick={() => setAction({ kind: 'assign' })}
         >
           <PlusIcon />
-          {t('Assign membership')}
+          {t('Purchase')}
         </button>
       </div>
       <section className="c-panel c-membership-directory">
@@ -90,7 +100,7 @@ export function Memberships({ onAuthError, onNotice }: CatalogProps) {
             <MagnifyingGlassIcon />
             <input
               aria-label={t('Search memberships')}
-              placeholder={t('Search by member, phone or plan')}
+              placeholder={t('Search by member, phone or program')}
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
@@ -142,14 +152,14 @@ export function Memberships({ onAuthError, onNotice }: CatalogProps) {
             <h2>{t('No memberships found')}</h2>
             <p>
               {t(
-                'Assign an available plan to an existing account with explicit dates.',
+                'Assign an available program to an existing account with explicit dates.',
               )}
             </p>
             <button
               className="c-button secondary"
               onClick={() => setAction({ kind: 'assign' })}
             >
-              {t('Assign membership')}
+              {t('Purchase')}
             </button>
           </div>
         ) : (
@@ -160,7 +170,7 @@ export function Memberships({ onAuthError, onNotice }: CatalogProps) {
                   <tr>
                     {[
                       'Member',
-                      'Plan',
+                      'Program',
                       'Period',
                       'Visits',
                       'Status',
@@ -219,39 +229,45 @@ export function Memberships({ onAuthError, onNotice }: CatalogProps) {
                       <td>
                         <div className="c-row-actions">
                           <button
-                            className="c-icon-button bordered"
+                            className="c-button secondary small"
                             disabled={item.status === 'Cancelled'}
                             aria-label={`Edit membership for ${item.user.name}`}
                             title={t('Edit membership')}
                             onClick={() => setAction({ kind: 'edit', item })}
                           >
                             <Pencil1Icon />
+                            {t('Edit membership')}
                           </button>
                           <button
-                            className="c-icon-button bordered"
+                            className="c-button secondary small"
                             disabled={item.plan.archived}
                             aria-label={`Renew membership for ${item.user.name}`}
                             title={t('Renew membership')}
                             onClick={() => setAction({ kind: 'renew', item })}
                           >
                             <ResetIcon />
+                            {t('Renew membership')}
                           </button>
+                          {canAudit && (
+                            <button
+                              className="c-button secondary small"
+                              aria-label={`Change history for ${item.user.name}`}
+                              title={t('Change history')}
+                              onClick={() => setAction({ kind: 'audit', item })}
+                            >
+                              <ClockIcon />
+                              {t('Change history')}
+                            </button>
+                          )}
                           <button
-                            className="c-icon-button bordered"
-                            aria-label={`Change history for ${item.user.name}`}
-                            title={t('Change history')}
-                            onClick={() => setAction({ kind: 'audit', item })}
-                          >
-                            <ClockIcon />
-                          </button>
-                          <button
-                            className="c-icon-button bordered"
+                            className="c-button secondary small"
                             disabled={item.status === 'Cancelled'}
                             aria-label={`Cancel membership for ${item.user.name}`}
                             title={t('Cancel membership')}
                             onClick={() => setAction({ kind: 'cancel', item })}
                           >
                             <CrossCircledIcon />
+                            {t('Cancel membership')}
                           </button>
                         </div>
                       </td>
@@ -467,21 +483,20 @@ function MembershipDialog({
         startDate: String(form.get('start') || ''),
         endDate: String(form.get('end') || ''),
         reason,
+        totalVisits: Number(form.get('visits')),
       };
       if (action.kind !== 'cancel' && period.endDate < period.startDate)
         throw new Error('End date cannot be before start date.');
       if (action.kind === 'assign') {
         if (!plan || !userId)
-          throw new Error('Select an account and an available plan.');
+          throw new Error('Select an account and an available program.');
         await catalogApi.assign({
           ...period,
           userId,
           planId: plan.id,
           planVersion: plan.version,
         });
-        onDone(
-          'Membership assigned. Its dates and quota are saved independently.',
-        );
+        onDone('Purchase recorded. Membership dates and visits are saved.');
       } else if (action.kind === 'edit') {
         await catalogApi.edit(action.item, {
           ...period,
@@ -508,7 +523,7 @@ function MembershipDialog({
   }
   const title =
     action.kind === 'assign'
-      ? 'Assign membership'
+      ? 'Purchase'
       : action.kind === 'edit'
         ? 'Edit membership'
         : action.kind === 'renew'
@@ -519,7 +534,7 @@ function MembershipDialog({
       <p className="c-subtitle">
         {item
           ? `${item.user.name} · ${item.plan.name}`
-          : t('Choose an account and plan, then enter both dates yourself.')}
+          : t('Choose an account and program, then enter both dates yourself.')}
       </p>
       <form className="c-form" onSubmit={submit}>
         {action.kind === 'assign' && (
@@ -530,11 +545,11 @@ function MembershipDialog({
               onError={onAuthError}
             />
             <label>
-              {t('Find a plan')}
+              {t('Find a program')}
               <input
                 type="search"
                 value={planSearch}
-                placeholder={t('Plan name')}
+                placeholder={t('Program name')}
                 onChange={(event) => {
                   setPlanSearch(event.target.value);
                   setPlanId('');
@@ -542,25 +557,29 @@ function MembershipDialog({
               />
             </label>
             <label>
-              {t('Plan')}
+              {t('Program')}
               <Select
-                aria-label={t('Plan')}
+                aria-label={t('Program')}
                 value={planId}
                 onValueChange={(value) => setPlanId(value)}
                 required
                 disabled={loading}
               >
                 <option value="">
-                  {t(loading ? 'Loading plans…' : 'Select an available plan')}
+                  {t(
+                    loading
+                      ? 'Loading programs…'
+                      : 'Select an available program',
+                  )}
                 </option>
                 {plans.map((plan) => (
                   <option key={plan.id} value={plan.id}>
-                    {plan.name} · {plan.totalVisits} {t('visits')}
+                    {plan.name}
                   </option>
                 ))}
               </Select>
               <small>
-                {t('Search if your plan is not in the first 100 results.')}
+                {t('Search if your program is not in the first 100 results.')}
               </small>
             </label>
             {optionsError && (
@@ -588,14 +607,22 @@ function MembershipDialog({
           <>
             {action.kind !== 'edit' && (
               <div className="c-domain-note">
-                <strong>
-                  {plan
-                    ? `${plan.totalVisits} ${t('visits in the new term')}`
-                    : t('Select a plan to see its quota.')}
-                </strong>
+                <strong>{t('Set the total visits for this member.')}</strong>
                 <p>
                   {t(
                     'No unused visits are carried forward. Both dates must be entered explicitly.',
+                  )}
+                </p>
+              </div>
+            )}
+            {action.kind === 'edit' && (
+              <div className="c-domain-note c-membership-date-note">
+                <strong>
+                  {t('Current end date')}: {item!.endDate}
+                </strong>
+                <p>
+                  {t(
+                    'Choose a later date to extend this membership. Visits do not increase automatically.',
                   )}
                 </p>
               </div>
@@ -624,24 +651,22 @@ function MembershipDialog({
                 />
               </label>
             </div>
-            {action.kind === 'edit' && (
-              <label>
-                {t('Total visits')}
-                <input
-                  name="visits"
-                  type="number"
-                  required
-                  step={1}
-                  min={Math.max(1, item!.usedVisits)}
-                  max={2147483647}
-                  defaultValue={item!.totalVisits}
-                />
-                <small>
-                  {item!.usedVisits}{' '}
-                  {t('visits already used. Total cannot be lower than this.')}
-                </small>
-              </label>
-            )}
+            <label>
+              {t('Total visits')}
+              <input
+                name="visits"
+                type="number"
+                required
+                step={1}
+                min={action.kind === 'edit' ? Math.max(1, item!.usedVisits) : 1}
+                max={2147483647}
+                defaultValue={action.kind === 'edit' ? item!.totalVisits : ''}
+              />
+              <small>
+                {action.kind === 'edit' ? item!.usedVisits : 0}{' '}
+                {t('visits already used. Total cannot be lower than this.')}
+              </small>
+            </label>
           </>
         )}
         <label>

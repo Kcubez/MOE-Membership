@@ -212,7 +212,11 @@ export function RoleBadge({ role }: { role: string }) {
   const t = useText();
   return (
     <span className={`c-role c-role-${role}`}>
-      {t(role.charAt(0).toUpperCase() + role.slice(1))}
+      {t(
+        role === 'super_admin'
+          ? 'Super Admin'
+          : role.charAt(0).toUpperCase() + role.slice(1),
+      )}
     </span>
   );
 }

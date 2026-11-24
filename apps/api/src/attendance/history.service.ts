@@ -35,7 +35,8 @@ export class HistoryService {
     scope: 'admin' | 'staff' | 'own',
   ) {
     const own = scope === 'own';
-    if (!own && actor.role !== scope) throw new ForbiddenException();
+    if (!own && !['super_admin', 'admin'].includes(actor.role))
+      throw new ForbiddenException();
     if (own && q.userId !== undefined)
       throw new BadRequestException({
         code: 'INVALID_INPUT',
@@ -77,9 +78,6 @@ export class HistoryService {
           }
         : {}),
       AND: [
-        ...(scope === 'staff'
-          ? [{ session: { assignments: { some: { userId: actor.id } } } }]
-          : []),
         ...(after
           ? [
               {

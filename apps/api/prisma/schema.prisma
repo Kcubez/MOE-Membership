@@ -122,7 +122,6 @@ model Plan {
   name           String
   description    String
   benefits       String
-  totalVisits    Int
   archived       Boolean         @default(false)
   trashedAt      DateTime?       @db.Timestamptz(6)
   version        Int             @default(1)

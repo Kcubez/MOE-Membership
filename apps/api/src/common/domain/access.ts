@@ -22,7 +22,11 @@ export async function assertWrite(
     actor.authVersion !== user.authVersion
   )
     throw new UnauthorizedException();
-  if (!user.enabled || user.role !== 'admin' || user.mustChangePassword)
+  if (
+    !user.enabled ||
+    !['super_admin', 'admin'].includes(user.role) ||
+    user.mustChangePassword
+  )
     throw new ForbiddenException();
   return user;
 }

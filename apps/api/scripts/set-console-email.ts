@@ -17,7 +17,7 @@ try {
   const updated = await db.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT id FROM moe_auth_user WHERE phone=${phone} FOR UPDATE`;
     const user = await tx.authUser.findUnique({ where: { phone } });
-    if (!user || !['admin', 'staff'].includes(user.role)) return false;
+    if (!user || !['super_admin', 'admin'].includes(user.role)) return false;
     if (user.email === email.data) return true;
     if (user.email !== phoneIdentity(phone)) return false;
     await tx.authUser.update({

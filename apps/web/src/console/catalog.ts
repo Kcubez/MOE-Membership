@@ -4,7 +4,6 @@ export type Plan = {
   name: string;
   description: string;
   benefits: string;
-  totalVisits: number;
   archived: boolean;
   trashedAt?: string | null;
   version: number;
@@ -48,7 +47,6 @@ export type PlanInput = {
   name: string;
   description: string;
   benefits: string;
-  totalVisits: number;
   reason: string;
 };
 function query(values: Record<string, string | number | undefined>) {
@@ -113,6 +111,7 @@ export const catalogApi = {
     userId: string;
     planId: string;
     planVersion: number;
+    totalVisits: number;
     startDate: string;
     endDate: string;
     reason: string;
@@ -132,7 +131,12 @@ export const catalogApi = {
     }),
   renew: (
     item: Membership,
-    body: { startDate: string; endDate: string; reason: string },
+    body: {
+      startDate: string;
+      endDate: string;
+      totalVisits: number;
+      reason: string;
+    },
   ) =>
     call<Membership>(
       `/admin/memberships/${encodeURIComponent(item.id)}/renew`,

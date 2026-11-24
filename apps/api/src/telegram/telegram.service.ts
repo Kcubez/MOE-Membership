@@ -20,7 +20,7 @@ export const telegramAction = z.enum(['qr', 'plan', 'history']);
 type Action = z.infer<typeof telegramAction>;
 const labels = {
   qr: 'Show my QR code',
-  plan: 'My plan',
+  plan: 'My program',
   history: 'Attendance history',
 } as const;
 const icons = { qr: '📱', plan: '📋', history: '📅' } as const;
@@ -106,6 +106,7 @@ export class TelegramService {
     const id = String(message.from.id);
     const action = telegramAction.options.find(
       (key) =>
+        (key === 'plan' && ['My plan', '📋 My plan'].includes(message.text!)) ||
         labels[key] === message.text ||
         icons[key] + ' ' + labels[key] === message.text,
     );
@@ -122,7 +123,7 @@ export class TelegramService {
     } else if (!action) {
       await this.send(
         id,
-        'Welcome to MOE Membership! Use the buttons below to view your QR code, membership plan, or attendance history.',
+        'Welcome to MOE Membership! Use the buttons below to view your QR code, membership program, or attendance history.',
         {
           keyboard: [
             [icons.qr + ' ' + labels.qr, icons.plan + ' ' + labels.plan],
@@ -278,8 +279,8 @@ export class TelegramService {
           ' visits left · through ' +
           item.endDate,
       );
-      if (nextCursor) lines.push('Open MOE to see all plans.');
-      await this.send(id, lines.join('\n') || 'You have no active plans.');
+      if (nextCursor) lines.push('Open MOE to see all programs.');
+      await this.send(id, lines.join('\n') || 'You have no active programs.');
     } else {
       const { items } = await this.history.list(
         { id: user.id, role: user.role },

@@ -47,6 +47,7 @@ export type AssignInput = {
   userId: string;
   planId: string;
   planVersion: number;
+  totalVisits: number;
   startDate: string;
   endDate: string;
   reason: string;
@@ -156,7 +157,7 @@ export class MembershipsService {
         if (plan.version !== input.planVersion)
           conflict(
             'PLAN_CHANGED',
-            'The plan changed. Refresh and review its quota before assigning.',
+            'The program changed. Refresh and review it before purchasing.',
           );
         if (renewedFromId) {
           await tx.$queryRaw`SELECT id FROM memberships WHERE id=${renewedFromId} FOR UPDATE`;
@@ -175,7 +176,7 @@ export class MembershipsService {
             userId: input.userId,
             planId: input.planId,
             ...period,
-            totalVisits: plan.totalVisits,
+            totalVisits: input.totalVisits,
             renewedFromId: renewedFromId || null,
           },
           include,
@@ -202,6 +203,7 @@ export class MembershipsService {
       startDate: string;
       endDate: string;
       planVersion: number;
+      totalVisits: number;
       reason: string;
     },
   ) {

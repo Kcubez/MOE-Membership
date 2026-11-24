@@ -76,8 +76,8 @@ export function buildAuth(
               state?.enabled &&
               ((portal === 'member' && state.role !== 'member') ||
                 (portal === 'console' &&
-                  state.role !== 'admin' &&
-                  state.role !== 'staff'))
+                  state.role !== 'super_admin' &&
+                  state.role !== 'admin'))
             ) {
               return false;
             }

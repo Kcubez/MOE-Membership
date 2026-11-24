@@ -103,20 +103,20 @@ test(
         .send(body);
     try {
       const admin = await sign('Plan Test Admin', '09791234562');
-      await pool.query("UPDATE moe_auth_user SET role='admin' WHERE id=$1", [
-        admin.body.user.id,
-      ]);
+      await pool.query(
+        "UPDATE moe_auth_user SET role='super_admin' WHERE id=$1",
+        [admin.body.user.id],
+      );
       const token = admin.body.token;
       const member = await sign('Plan Test Member', '09791234563');
       const staff = await sign('Plan Test Staff', '09791234564');
-      await pool.query("UPDATE moe_auth_user SET role='staff' WHERE id=$1", [
+      await pool.query("UPDATE moe_auth_user SET role='admin' WHERE id=$1", [
         staff.body.user.id,
       ]);
       const input = {
         name: 'Weekly Meetup',
         description: 'Community meetup',
         benefits: 'Networking\nShared learning',
-        totalVisits: 10,
         reason: 'Initial plan',
       };
       await write(
@@ -130,7 +130,7 @@ test(
         '/api/v1/admin/plans',
         input,
         staff.body.token,
-      ).expect(403);
+      ).expect(200);
       await write(
         'post',
         '/api/v1/admin/plans',
@@ -146,9 +146,15 @@ test(
       const plan = (
         await write('post', '/api/v1/admin/plans', input, token).expect(200)
       ).body;
+      assert.equal('totalVisits' in plan, false);
+      await api
+        .get(`/api/v1/admin/plans/${plan.id}/audit`)
+        .set('Authorization', `Bearer ${staff.body.token}`)
+        .expect(403);
       const assign = {
         userId: member.body.user.id,
         planId: plan.id,
+        totalVisits: 10,
         planVersion: plan.version,
         startDate: '2026-11-01',
         endDate: '2026-11-30',
@@ -195,6 +201,12 @@ test(
           0,
         );
       }
+      await write(
+        'post',
+        '/api/v1/admin/memberships',
+        { ...assign, totalVisits: undefined },
+        token,
+      ).expect(400);
       const first = (
         await write('post', '/api/v1/admin/memberships', assign, token).expect(
           200,
@@ -204,7 +216,7 @@ test(
       assert.equal(first.usedVisits, 0);
       assert.equal(first.remainingVisits, 10);
       // A picker selection can become stale: renewal must re-check the target role under lock.
-      await pool.query("UPDATE moe_auth_user SET role='staff' WHERE id=$1", [
+      await pool.query("UPDATE moe_auth_user SET role='admin' WHERE id=$1", [
         member.body.user.id,
       ]);
       try {
@@ -213,6 +225,7 @@ test(
           `/api/v1/admin/memberships/${first.id}/renew`,
           {
             planVersion: plan.version,
+            totalVisits: 10,
             startDate: '2026-12-01',
             endDate: '2026-12-31',
             reason: 'Role changed after selection',
@@ -239,7 +252,7 @@ test(
           `/api/v1/admin/plans/${plan.id}`,
           {
             ...input,
-            totalVisits: 13,
+            benefits: 'Updated benefits',
             version: 1,
             reason: 'New quota for future assignments',
           },
@@ -269,6 +282,7 @@ test(
             startDate: '2026-12-01',
             endDate: '2026-12-31',
             planVersion: editedPlan.version,
+            totalVisits: 13,
             reason: 'Renew term',
           },
           token,
@@ -284,7 +298,7 @@ test(
         version: 1,
         reason: 'Correct dates',
       };
-      const updated = (
+      let updated = (
         await write(
           'patch',
           `/api/v1/admin/memberships/${first.id}`,
@@ -298,6 +312,43 @@ test(
         edits,
         token,
       ).expect(409);
+      // Extend the same membership without changing its visit allowance.
+      const previousVersion = updated.version;
+      updated = (
+        await write(
+          'patch',
+          `/api/v1/admin/memberships/${first.id}`,
+          {
+            ...edits,
+            endDate: '2026-11-30',
+            version: previousVersion,
+            reason: 'Extend existing term',
+          },
+          staff.body.token,
+        ).expect(200)
+      ).body;
+      assert.equal(updated.endDate, '2026-11-30');
+      assert.equal(updated.totalVisits, 10);
+      const extensionAudit = (
+        await api
+          .get(`/api/v1/admin/memberships/${first.id}/audit`)
+          .set('Authorization', `Bearer ${token}`)
+          .expect(200)
+      ).body.items;
+      assert.ok(
+        extensionAudit.some(
+          (row: {
+            before: { endDate?: string };
+            after: { endDate?: string };
+          }) =>
+            row.before?.endDate === '2026-11-29' &&
+            row.after?.endDate === '2026-11-30',
+        ),
+      );
+      await api
+        .get(`/api/v1/admin/memberships/${first.id}/audit`)
+        .set('Authorization', `Bearer ${staff.body.token}`)
+        .expect(403);
       await pool.query('UPDATE memberships SET "usedVisits"=5 WHERE id=$1', [
         first.id,
       ]);
@@ -355,6 +406,7 @@ test(
             startDate: '2027-01-01',
             endDate: '2027-01-31',
             planVersion: editedPlan.version,
+            totalVisits: 13,
           },
           token,
         ),
@@ -366,6 +418,7 @@ test(
             startDate: '2027-01-01',
             endDate: '2027-01-31',
             planVersion: editedPlan.version,
+            totalVisits: 13,
           },
           token,
         ),

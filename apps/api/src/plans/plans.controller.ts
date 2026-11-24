@@ -18,22 +18,15 @@ import {
   SessionGuard,
   type AuthenticatedRequest,
 } from '../auth/session.guard.js';
-import { AdminGuard } from '../auth/roles.guard.js';
+import { AdminGuard, SuperAdminGuard } from '../auth/roles.guard.js';
 import { DomainExceptionFilter } from '../common/domain/errors.js';
-import {
-  parse,
-  pageQuery,
-  reason,
-  version,
-  visits,
-} from '../common/domain/rules.js';
+import { parse, pageQuery, reason, version } from '../common/domain/rules.js';
 import { PlansService } from './plans.service.js';
 const input = z
   .object({
     name: z.string().trim().min(1).max(120),
     description: z.string().trim().max(2000),
     benefits: z.string().trim().max(4000),
-    totalVisits: visits,
     reason,
   })
   .strict();
@@ -64,9 +57,10 @@ export class PlansController {
   ) {
     return this.service.get(id);
   }
-  @Get(':id/audit') @Header('Cache-Control', 'no-store') history(
-    @Param('id') id: string,
-  ) {
+  @Get(':id/audit')
+  @UseGuards(SuperAdminGuard)
+  @Header('Cache-Control', 'no-store')
+  history(@Param('id') id: string) {
     return this.service.history(id);
   }
   @Post() @HttpCode(200) create(

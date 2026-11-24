@@ -19,9 +19,10 @@ import { Pager, AuditDialog, type CatalogProps } from './CatalogShared';
 import { useText } from './i18n';
 type Action =
   | { kind: 'create' }
-  | { kind: 'staff' | 'state' | 'audit'; item: MeetupSession };
+  | { kind: 'admin' | 'state' | 'audit'; item: MeetupSession };
 export function Sessions({
   admin,
+  canAudit,
   onAuthError,
   onNotice,
 }: CatalogProps & { admin: boolean }) {
@@ -43,6 +44,14 @@ export function Sessions({
     setCursors([undefined]);
   };
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setApplied(search.trim());
+      setPage(0);
+      setCursors([undefined]);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [search]);
+  useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
     setError('');
@@ -51,7 +60,9 @@ export function Sessions({
         { search: applied, open, from, to, cursor: cursors[page] },
         controller.signal,
       )
-      .then(setData)
+      .then((result) => {
+        if (!controller.signal.aborted) setData(result);
+      })
       .catch((error) => {
         if (!controller.signal.aborted) {
           setError(messageOf(error));
@@ -68,12 +79,12 @@ export function Sessions({
       <div className="c-page-heading">
         <div>
           <p className="c-eyebrow">MOE MEMBERSHIP SYSTEM</p>
-          <h1>{t('Meetup sessions')}</h1>
+          <h1>{t('Meetup events')}</h1>
           <p>
             {t(
               admin
-                ? 'Organise meetups and manage staff access.'
-                : 'Only sessions currently assigned to you are shown.',
+                ? 'Organise meetups and manage admin access.'
+                : 'Only events currently assigned to you are shown.',
             )}
           </p>
         </div>
@@ -83,7 +94,7 @@ export function Sessions({
             onClick={() => setAction({ kind: 'create' })}
           >
             <PlusIcon />
-            {t('Create session')}
+            {t('Create event')}
           </button>
         )}
       </div>
@@ -99,8 +110,8 @@ export function Sessions({
           >
             <MagnifyingGlassIcon />
             <input
-              aria-label={t('Search sessions')}
-              placeholder={t('Session or plan name')}
+              aria-label={t('Search events')}
+              placeholder={t('Event or program name')}
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
@@ -108,14 +119,14 @@ export function Sessions({
           </form>
           <div className="c-filters">
             <Select
-              aria-label={t('Session state')}
+              aria-label={t('Event state')}
               value={open}
               onValueChange={(value) => {
                 setOpen(value);
                 reset();
               }}
             >
-              <option value="">{t('All sessions')}</option>
+              <option value="">{t('All events')}</option>
               <option value="true">{t('Open')}</option>
               <option value="false">{t('Closed')}</option>
             </Select>
@@ -180,12 +191,12 @@ export function Sessions({
         ) : !data?.items.length ? (
           <div className="c-empty">
             <CalendarIcon />
-            <h2>{t('No sessions found')}</h2>
+            <h2>{t('No events found')}</h2>
             <p>
               {t(
                 admin
-                  ? 'Create a session or adjust the filters.'
-                  : 'Ask your administrator to assign you to a session.',
+                  ? 'Create a event or adjust the filters.'
+                  : 'Ask your administrator to assign you to an event.',
               )}
             </p>
           </div>
@@ -209,16 +220,16 @@ export function Sessions({
                   <time className="c-session-date">{item.meetupDate}</time>
                   {admin && (
                     <div className="c-session-roster">
-                      <strong>{t('Assigned staff')}</strong>
+                      <strong>{t('Assigned admin')}</strong>
                       <p>
                         {item.staff?.length
                           ? item.staff
                               .map(
                                 (staff) =>
-                                  `${staff.name}${!staff.enabled || staff.role !== 'staff' ? ` (${t('No current staff access')})` : ''}`,
+                                  `${staff.name}${!staff.enabled || staff.role !== 'admin' ? ` (${t('No current admin access')})` : ''}`,
                               )
                               .join(', ')
-                          : t('No staff assigned')}
+                          : t('No admin assigned')}
                       </p>
                     </div>
                   )}
@@ -226,24 +237,27 @@ export function Sessions({
                     <div className="c-plan-actions">
                       <button
                         className="c-button secondary small"
-                        onClick={() => setAction({ kind: 'staff', item })}
+                        onClick={() => setAction({ kind: 'admin', item })}
                       >
                         <PersonIcon />
-                        {t('Manage staff')}
+                        {t('Manage admin')}
                       </button>
                       <button
                         className="c-button secondary small"
                         onClick={() => setAction({ kind: 'state', item })}
                       >
-                        {t(item.open ? 'Close session' : 'Open session')}
+                        {t(item.open ? 'Close event' : 'Open event')}
                       </button>
-                      <button
-                        className="c-icon-button bordered"
-                        aria-label={`${t('Change history')} · ${item.name}`}
-                        onClick={() => setAction({ kind: 'audit', item })}
-                      >
-                        <ClockIcon />
-                      </button>
+                      {canAudit && (
+                        <button
+                          className="c-button secondary small"
+                          aria-label={`${t('Change history')} · ${item.name}`}
+                          onClick={() => setAction({ kind: 'audit', item })}
+                        >
+                          <ClockIcon />
+                          {t('Change history')}
+                        </button>
+                      )}
                     </div>
                   )}
                 </article>
@@ -267,7 +281,7 @@ export function Sessions({
       </section>
       <p className="c-footnote">
         {t(
-          'Meetup dates use Myanmar time. Live check-ins require an open session on its meetup date.',
+          'Meetup dates use Myanmar time. Live check-ins require an open event on its meetup date.',
         )}
       </p>
       {action?.kind === 'audit' ? (
@@ -317,7 +331,7 @@ function StaffPicker({
     const timer = setTimeout(() => {
       void consoleApi
         .accounts(
-          { role: 'staff', enabled: true, search, limit: 20 },
+          { role: 'admin', enabled: true, search, limit: 20 },
           controller.signal,
         )
         .then((data) => {
@@ -343,7 +357,7 @@ function StaffPicker({
     setLoading(true);
     try {
       const data = await consoleApi.accounts({
-        role: 'staff',
+        role: 'admin',
         enabled: true,
         search,
         limit: 20,
@@ -361,10 +375,10 @@ function StaffPicker({
   return (
     <fieldset className="c-staff-picker">
       <legend>
-        {t('Assigned staff')} ({ids.length})
+        {t('Assigned admin')} ({ids.length})
       </legend>
       <label>
-        {t('Find staff')}
+        {t('Find admin')}
         <input
           type="search"
           placeholder={t('Name or phone number')}
@@ -408,9 +422,9 @@ function StaffPicker({
         ))}
       </div>
       {loading ? (
-        <InlineLoading label="Loading staff…" />
+        <InlineLoading label="Loading admin…" />
       ) : !items.length ? (
-        <p>{t('No enabled staff found')}</p>
+        <p>{t('No enabled admin found')}</p>
       ) : null}
       {cursor && (
         <button
@@ -419,14 +433,14 @@ function StaffPicker({
           disabled={loading}
           onClick={() => void more()}
         >
-          <BusyLabel busy={loading} active="Loading staff…">
-            {t('Load more staff')}
+          <BusyLabel busy={loading} active="Loading admin…">
+            {t('Load more admin')}
           </BusyLabel>
         </button>
       )}
       <small>
         {t(
-          'Selections are retained while searching. Use Clear staff to remove all assignments.',
+          'Selections are retained while searching. Use Clear admin to remove all assignments.',
         )}
       </small>
       <button
@@ -434,7 +448,7 @@ function StaffPicker({
         className="c-button secondary small"
         onClick={() => onChange([])}
       >
-        {t('Clear staff')}
+        {t('Clear admin')}
       </button>
     </fieldset>
   );
@@ -501,13 +515,13 @@ function SessionDialog({
           staffIds: ids,
           reason,
         });
-        onDone('Session created.');
-      } else if (action.kind === 'staff') {
+        onDone('Event created.');
+      } else if (action.kind === 'admin') {
         await sessionsApi.staff(action.item, ids, reason);
-        onDone('Staff assignments updated.');
+        onDone('Admin assignments updated.');
       } else if (action.kind === 'state') {
         await sessionsApi.state(action.item, reason);
-        onDone(action.item.open ? 'Session closed.' : 'Session opened.');
+        onDone(action.item.open ? 'Event closed.' : 'Event opened.');
       }
       onClose();
     } catch (error) {
@@ -519,28 +533,28 @@ function SessionDialog({
   }
   const title =
     action.kind === 'create'
-      ? 'Create session'
-      : action.kind === 'staff'
-        ? 'Manage staff'
+      ? 'Create event'
+      : action.kind === 'admin'
+        ? 'Manage admin'
         : item?.open
-          ? 'Close session'
-          : 'Open session';
+          ? 'Close event'
+          : 'Open event';
   return (
     <Dialog title={t(title)} onClose={onClose} busy={busy}>
       <p className="c-subtitle">
         {item
           ? `${item.name} · ${item.plan.name} · ${item.meetupDate}`
-          : t('Choose a plan and enter the meetup date explicitly.')}
+          : t('Choose a program and enter the meetup date explicitly.')}
       </p>
       <form className="c-form" onSubmit={submit}>
         {action.kind === 'create' && (
           <>
             <label>
-              {t('Session name')}
+              {t('Event name')}
               <input name="name" required maxLength={120} autoFocus />
             </label>
             <label>
-              {t('Find a plan')}
+              {t('Find a program')}
               <input
                 type="search"
                 value={search}
@@ -551,16 +565,20 @@ function SessionDialog({
               />
             </label>
             <label>
-              {t('Plan')}
+              {t('Program')}
               <Select
-                aria-label={t('Plan')}
+                aria-label={t('Program')}
                 required
                 disabled={loading}
                 value={planId}
                 onValueChange={(value) => setPlanId(value)}
               >
                 <option value="">
-                  {t(loading ? 'Loading plans…' : 'Select an available plan')}
+                  {t(
+                    loading
+                      ? 'Loading programs…'
+                      : 'Select an available program',
+                  )}
                 </option>
                 {plans.map((plan) => (
                   <option key={plan.id} value={plan.id}>
@@ -569,7 +587,7 @@ function SessionDialog({
                 ))}
               </Select>
               <small>
-                {t('Search if your plan is not in the first 100 results.')}
+                {t('Search if your program is not in the first 100 results.')}
               </small>
             </label>
             {optionsError && (
@@ -596,10 +614,10 @@ function SessionDialog({
               />
             </label>
             <label>
-              {t('Session state')}
+              {t('Event state')}
               <Select
                 name="state"
-                aria-label={t('Session state')}
+                aria-label={t('Event state')}
                 defaultValue="closed"
               >
                 <option value="closed">{t('Closed')}</option>
@@ -608,7 +626,7 @@ function SessionDialog({
             </label>
           </>
         )}
-        {(action.kind === 'create' || action.kind === 'staff') && (
+        {(action.kind === 'create' || action.kind === 'admin') && (
           <StaffPicker ids={ids} onChange={setIds} onAuthError={onAuthError} />
         )}{' '}
         {action.kind === 'state' && (
@@ -643,7 +661,7 @@ function SessionDialog({
             aria-busy={busy}
           >
             <BusyLabel busy={busy}>
-              {t(action.kind === 'staff' ? 'Save staff' : title)}
+              {t(action.kind === 'admin' ? 'Save admin' : title)}
             </BusyLabel>
           </button>
         </div>

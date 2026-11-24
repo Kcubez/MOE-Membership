@@ -8,11 +8,13 @@ import type { CatalogProps } from './CatalogShared';
 type Metadata = { userId: string; version: number; updatedAt: string };
 export function RegenerateQrDialog({
   account,
+  canAudit,
   onClose,
   onDone,
   onAuthError,
 }: {
   account: Account;
+  canAudit: boolean;
   onClose: () => void;
   onDone: (message: string) => void;
   onAuthError: CatalogProps['onAuthError'];
@@ -31,7 +33,11 @@ export function RegenerateQrDialog({
     setError('');
     void Promise.all([
       call<Metadata>(path, { signal: controller.signal }),
-      call<{ items: Audit[] }>(path + '/audit', { signal: controller.signal }),
+      canAudit
+        ? call<{ items: Audit[] }>(path + '/audit', {
+            signal: controller.signal,
+          })
+        : Promise.resolve({ items: [] }),
     ])
       .then(([meta, audit]) => {
         setData(meta);
@@ -47,7 +53,7 @@ export function RegenerateQrDialog({
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [path, retry, onAuthError]);
+  }, [path, retry, onAuthError, canAudit]);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!data) return;
@@ -125,26 +131,28 @@ export function RegenerateQrDialog({
               </button>
             </div>
           </form>
-          <div className="c-qr-history">
-            <h3>{t('Recent QR changes')}</h3>
-            {history.length ? (
-              history.slice(0, 10).map((item) => (
-                <article key={item.id}>
-                  <strong>{item.actorName}</strong>
-                  <p>{item.reason}</p>
-                  <small>
-                    {new Intl.DateTimeFormat('en-GB', {
-                      dateStyle: 'medium',
-                      timeStyle: 'short',
-                      timeZone: 'Asia/Yangon',
-                    }).format(new Date(item.createdAt))}
-                  </small>
-                </article>
-              ))
-            ) : (
-              <p>{t('No changes recorded.')}</p>
-            )}
-          </div>
+          {canAudit && (
+            <div className="c-qr-history">
+              <h3>{t('Recent QR changes')}</h3>
+              {history.length ? (
+                history.slice(0, 10).map((item) => (
+                  <article key={item.id}>
+                    <strong>{item.actorName}</strong>
+                    <p>{item.reason}</p>
+                    <small>
+                      {new Intl.DateTimeFormat('en-GB', {
+                        dateStyle: 'medium',
+                        timeStyle: 'short',
+                        timeZone: 'Asia/Yangon',
+                      }).format(new Date(item.createdAt))}
+                    </small>
+                  </article>
+                ))
+              ) : (
+                <p>{t('No changes recorded.')}</p>
+              )}
+            </div>
+          )}
         </>
       )}
     </Dialog>

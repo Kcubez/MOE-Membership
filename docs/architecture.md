@@ -1,5 +1,17 @@
 # Architecture
 
+## Owner-confirmed update — 24 November 2026
+
+This update supersedes earlier descriptions of Staff permissions and program quota templates. UI terminology is **Program**, **Purchase** (the former Assign membership action), **Membership**, and **Meetup event**. Technical `plans`, `sessions`, `planId`, `staffIds`, `staff`, and legacy endpoints remain stable for existing clients; authentication sessions keep their original meaning.
+
+Roles are `super_admin`, `admin`, `member`: migrate previous Admin to Super Admin and Staff to Admin. Both console roles use email/password and can manage operational features and all events. Only Super Admin reads audit endpoints; reports/export remain unimplemented and reserved for Super Admin. Disabling/resetting/changing access for Super Admin is protected from ordinary Admin. Assignment rows no longer restrict event access.
+
+Programs store descriptions/benefits, not visit quotas or membership dates. Purchase and renewal require explicit positive `totalVisits` for the individual member plus start/end dates and a reason. Existing membership allowances and attendance remain unchanged. Edit membership displays the current end date; a later end date extends the same membership, retaining its quota unless explicitly changed. Version checks, overlap prevention, attendance-date validation and before/after audit continue to apply. Purchase does not process payments.
+
+Apply `npm run db:deploy -w @moe/api` to the intended environment before deploying the updated API and UI together. The migration revokes existing console sessions; users sign in again. Coordinate Flutter role handling and required purchase/renewal `totalVisits` before rollout. Test on staging first. Database migration has not been applied to production by this change.
+
+Search text updates after a 250ms debounce, resets pagination and aborts stale requests. Table actions have visible labels. English and Myanmar UI labels remain supported.
+
 ## Status and selected stack
 
 The system implements React/Vite web clients, a shared NestJS API, and Better Auth password authentication. Prisma 7.10.1 with the official Better Auth Prisma adapter accesses Neon PostgreSQL. Prisma Migrate owns auth and business tables. Flutter is developed independently against the same API. Plans, memberships, personal QR APIs, session management, live scanning, check-ins, history, historical backfill and attendance cancellation are implemented. Reports/export, dashboard metrics and hosted/device acceptance remain separate release work.

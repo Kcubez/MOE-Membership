@@ -47,10 +47,10 @@ try {
   const password = await context.password.hash(BOOTSTRAP_ADMIN_PASSWORD);
   await db.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT pg_advisory_xact_lock(631248092)::text`;
-    if (await tx.authUser.count({ where: { role: 'admin' } }))
+    if (await tx.authUser.count({ where: { role: 'super_admin' } }))
       throw new BootstrapError(
         'ADMIN_EXISTS',
-        'Admin already exists; bootstrap is locked. Sign in with the existing Admin account.',
+        'Super Admin already exists; bootstrap is locked. Sign in with the existing Super Admin account.',
       );
     if (await tx.authUser.findUnique({ where: { email } }))
       throw new BootstrapError(
@@ -64,7 +64,7 @@ try {
         name: BOOTSTRAP_ADMIN_NAME,
         email,
         emailVerified: false,
-        role: 'admin',
+        role: 'super_admin',
         enabled: true,
         mustChangePassword: true,
       },

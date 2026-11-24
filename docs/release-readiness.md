@@ -1,5 +1,11 @@
 # Release readiness — 6 November 2026
 
+## November 24 contract update
+
+Current roles: `super_admin`, `admin`, `member`. Both console roles use email/password; members use phone/password. Previous Admin becomes Super Admin and previous Staff becomes Admin in the migration. Console sessions are revoked during migration. Admin can operate all meetup events, memberships, purchases and attendance; event assignments are optional metadata. Audit reads and future reports/export are Super Admin only.
+
+UI labels are Programs, Purchase and Meetup events; Memberships stays unchanged. Technical paths/keys (`plans`, `sessions`, `staffIds`, `staff`, `planId`) remain unchanged. Programs no longer return or accept `totalVisits`. Purchase (`POST /api/v1/admin/memberships`) and renewal (`POST /api/v1/admin/memberships/{id}/renew`) require a positive `totalVisits`, explicit dates and reason. Editing a membership can extend endDate using its current version, dates, quota and reason. The allowance is preserved unless explicitly changed. Coordinate these contract changes with Flutter before deploying.
+
 ## Decision
 
 The code is a candidate for a configured Vercel staging deployment. It is not yet a verified production release. No Vercel deployment or hosted build was performed during this review.
@@ -41,3 +47,7 @@ Vite reports an initial minified JavaScript chunk of approximately 509 kB (144 k
 
 - [Vercel NestJS support](https://vercel.com/docs/frameworks/backend/nestjs)
 - [Vercel Vite support](https://vercel.com/docs/frameworks/frontend/vite)
+
+## 2026-11-24 local verification
+
+Program/purchase terminology, individual membership quotas, membership end-date extension and console role migration were verified with lint, both workspace type checks and both production builds. All 13 API tests passed against isolated PostgreSQL (zero skipped), using Node 24.5.0 locally. Production migration and deployment have not been performed. Browser/device layout and live Telegram acceptance still require staging verification. The web build reports a non-blocking bundle-size warning.

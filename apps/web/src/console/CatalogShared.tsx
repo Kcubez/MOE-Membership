@@ -5,6 +5,7 @@ import { catalogApi, type Audit } from './catalog';
 import { messageOf } from './client';
 import { useText } from './i18n';
 export type CatalogProps = {
+  canAudit?: boolean;
   onAuthError: (error: unknown) => void;
   onNotice: (message: string) => void;
 };
@@ -85,7 +86,7 @@ export function AuditDialog({
     name: 'Name',
     meetupDate: 'Meetup date',
     open: 'Open',
-    staffNames: 'Assigned staff',
+    staffNames: 'Assigned admin',
     description: 'Description',
     benefits: 'Benefits',
     totalVisits: 'Total visits',

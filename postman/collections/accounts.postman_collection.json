@@ -39,7 +39,7 @@
         "url": "{{baseUrl}}/api/v1/auth/login",
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"phone\": \"{{adminPhone}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+          "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -56,7 +56,7 @@
           "script": {
             "type": "text/javascript",
             "exec": [
-              "pm.test('Admin is ready',()=>{pm.response.to.have.status(200); const b=pm.response.json();pm.expect(b.user.role).to.eql('admin');pm.expect(b.user.mustChangePassword).to.eql(false);pm.variables.set('adminToken',b.token);});"
+              "pm.test('Admin is ready',()=>{pm.response.to.have.status(200); const b=pm.response.json();pm.expect(b.user.role).to.eql('super_admin');pm.expect(b.user.mustChangePassword).to.eql(false);pm.variables.set('adminToken',b.token);});"
             ]
           }
         }
@@ -499,7 +499,7 @@
         "url": "{{baseUrl}}/api/v1/admin/users/{{managedUserId}}/access",
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"enabled\": true,\n  \"role\": \"staff\",\n  \"reason\": \"Re-enable synthetic test account as Staff\"\n}",
+          "raw": "{\n  \"enabled\": true,\n  \"role\": \"admin\",\n  \"reason\": \"Re-enable synthetic test account as Staff\"\n}",
           "options": {
             "raw": {
               "language": "json"

@@ -6,7 +6,6 @@ export type PlanInput = {
   name: string;
   description: string;
   benefits: string;
-  totalVisits: number;
   reason: string;
 };
 @Injectable()

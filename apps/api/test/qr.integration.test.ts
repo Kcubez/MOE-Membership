@@ -84,12 +84,13 @@ test(
 
     try {
       const admin = await sign('QR Test Admin', '09791234569');
-      await pool.query("UPDATE moe_auth_user SET role='admin' WHERE id=$1", [
-        admin.body.user.id,
-      ]);
+      await pool.query(
+        "UPDATE moe_auth_user SET role='super_admin' WHERE id=$1",
+        [admin.body.user.id],
+      );
       const member = await sign('QR Test Member', '09791234570');
       const staff = await sign('QR Test Staff', '09791234571');
-      await pool.query("UPDATE moe_auth_user SET role='staff' WHERE id=$1", [
+      await pool.query("UPDATE moe_auth_user SET role='admin' WHERE id=$1", [
         staff.body.user.id,
       ]);
       const token = admin.body.token,
@@ -134,7 +135,7 @@ test(
       );
       await get('/members/me/qr', staff.body.token).expect(200);
       await get(base, memberToken).expect(403);
-      await get(base, staff.body.token).expect(403);
+      await get(base, staff.body.token).expect(200);
       await post(
         base + '/regenerate',
         { version: 1, reason: 'Unauthorized' },
@@ -143,7 +144,7 @@ test(
       await post(
         base + '/regenerate',
         { version: 1, reason: 'Unauthorized' },
-        staff.body.token,
+        memberToken,
       ).expect(403);
       await get(base + '/audit', staff.body.token).expect(403);
       await get('/admin/users/missing/qr').expect(404);

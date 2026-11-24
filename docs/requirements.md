@@ -97,3 +97,12 @@ Owner additionally requested a React member signup page. Expose /signup with nam
 ## Owner correction — membership recipient roles
 
 New membership assignments and renewals are restricted to currently enabled Member-role accounts. Admin and Staff accounts are not eligible recipients. Recheck role on the server under the target-account lock, not only in the picker. Existing records are retained for review/correction; do not silently delete or cancel historical data.
+
+## Owner-confirmed changes — 24 November 2026 (supersedes earlier role/quota rules)
+
+- Roles: existing Admin becomes super_admin; existing Staff becomes admin; Member remains member. Both console roles manage all operational features and all events without assignment restrictions. Reports/export and all audit-reading APIs/UI are super_admin only. Admin cannot modify/reset/disable a Super Admin or promote anyone to Super Admin. Bootstrap creates the first Super Admin.
+- UI terminology: Plan → Program; Assign membership → Purchase; Meetup session → Meetup event. Memberships and Edit membership retain their names. Auth sessions and existing API paths/identifier keys retain their technical names. Purchase records manual membership creation, not online payment processing.
+- Programs have name, description and benefits, with no visit quota. Purchase and renewal require an explicit positive totalVisits per member, plus both dates. Existing memberships retain all visits and dates.
+- Edit membership shows the current end date beside the editable end date. Extension changes the current membership, retains a reason and before/after audit, never grants extra visits, and enforces non-overlap/attendance boundaries.
+- Search results update after a short typing debounce with cancellation of obsolete requests and pagination reset. Table actions show icon plus visible labels.
+- Deploy the migration and API/frontend together. Role migration revokes existing console sessions; users sign in again with their existing credentials. Flutter consumers must accept super_admin/admin/member and send totalVisits on purchase/renewal.

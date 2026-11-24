@@ -64,12 +64,12 @@ const MemberApp = lazy(() =>
 );
 const pages: { key: string; label: string; icon: Icon; pending?: boolean }[] = [
   { key: 'overview', label: 'Overview', icon: DashboardIcon },
-  { key: 'users', label: 'Users & staff', icon: PersonIcon },
-  { key: 'plans', label: 'Plans', icon: ReaderIcon },
+  { key: 'users', label: 'Users & admins', icon: PersonIcon },
+  { key: 'plans', label: 'Programs', icon: ReaderIcon },
   { key: 'memberships', label: 'Memberships', icon: IdCardIcon },
   {
     key: 'sessions',
-    label: 'Meetup sessions',
+    label: 'Meetup events',
     icon: CalendarIcon,
   },
   { key: 'scanner', label: 'QR scanner', icon: Crosshair2Icon },
@@ -113,10 +113,8 @@ function readPage() {
 function allowedPages(role: string) {
   return pages.filter(
     (item) =>
-      role === 'admin' ||
-      ['overview', 'settings', 'sessions', 'scanner', 'attendance'].includes(
-        item.key,
-      ),
+      role === 'super_admin' ||
+      (role === 'admin' && !['reports', 'audit-logs'].includes(item.key)),
   );
 }
 function memberAppUrl() {
@@ -224,7 +222,7 @@ function Console({
   useEffect(() => {
     if (checking || restoreError) return;
     const path = canonicalPath();
-    const consoleRole = user?.role === 'admin' || user?.role === 'staff';
+    const consoleRole = user?.role === 'super_admin' || user?.role === 'admin';
     const legacy = path === '/console/qr';
     const known =
       !!memberSection(path) ||
@@ -431,7 +429,7 @@ function Console({
         />
       </Suspense>
     );
-  const isAdmin = user.role === 'admin';
+  const isAdmin = ['super_admin', 'admin'].includes(user.role);
   const allowed = allowedPages(user.role);
   const current = allowed.find((item) => item.key === page) || allowed[0]!;
   return (
@@ -462,10 +460,10 @@ function Console({
         </div>
         <p className="c-nav-label">
           {t(
-            isAdmin
-              ? 'Admin console'
-              : user.role === 'staff'
-                ? 'Staff console'
+            user.role === 'super_admin'
+              ? 'Super Admin console'
+              : user.role === 'admin'
+                ? 'Admin console'
                 : 'Member account',
           )}
         </p>
@@ -518,7 +516,13 @@ function Console({
                   pages.find((item) => item.key === page)?.label || 'Overview',
                 )}
               </span>
-              <strong>{user.name}</strong>
+              <strong>
+                {user.role === 'super_admin'
+                  ? t('Super Admin')
+                  : user.role === 'admin'
+                    ? t('Admin')
+                    : user.name}
+              </strong>
             </div>
           </div>
           <div className="c-topbar-tools">
@@ -569,6 +573,7 @@ function Console({
             />
           ) : current.key === 'plans' || current.key === 'trash' ? (
             <Plans
+              canAudit={user.role === 'super_admin'}
               key={current.key}
               trash={current.key === 'trash'}
               onAuthError={authError}
@@ -576,20 +581,19 @@ function Console({
             />
           ) : current.key === 'memberships' ? (
             <Memberships
+              canAudit={user.role === 'super_admin'}
               onAuthError={authError}
               onNotice={(text) => setNotice({ text, success: true })}
             />
           ) : current.key === 'sessions' ? (
             <Sessions
+              canAudit={user.role === 'super_admin'}
               admin={isAdmin}
               onAuthError={authError}
               onNotice={(text) => setNotice({ text, success: true })}
             />
           ) : current.key === 'attendance' ? (
-            <Attendance
-              isAdmin={user.role === 'admin'}
-              onAuthError={authError}
-            />
+            <Attendance isAdmin={isAdmin} onAuthError={authError} />
           ) : current.key === 'scanner' ? (
             <Scanner onAuthError={authError} />
           ) : current.key === 'settings' ? (
@@ -781,7 +785,7 @@ function Overview({
   const stats: [string, keyof Summary, Icon][] = [
     ['Total accounts', 'total', PersonIcon],
     ['Enabled accounts', 'enabled', CheckCircledIcon],
-    ['Staff accounts', 'staff', IdCardIcon],
+    ['Admin accounts', 'staff', IdCardIcon],
     ['Password changes required', 'passwordChangesRequired', LockClosedIcon],
   ];
   return (
@@ -827,7 +831,7 @@ function Overview({
                       : key === 'enabled'
                         ? 'Currently have account access'
                         : key === 'staff'
-                          ? 'Including disabled staff accounts'
+                          ? 'Including disabled admin accounts'
                           : 'Must update their temporary password',
                   )}
                 </small>
@@ -839,7 +843,7 @@ function Overview({
               <div className="c-section-heading">
                 <div>
                   <h2>{t('Account directory')}</h2>
-                  <p>{t('Members, staff and administrators')}</p>
+                  <p>{t('Members and administrators')}</p>
                 </div>
                 <button
                   className="c-text-button"
@@ -924,9 +928,7 @@ function Overview({
                 <p className="c-eyebrow">{t('Coming next')}</p>
                 <h3>{t('Meetup check-in')}</h3>
                 <p>
-                  {t(
-                    'Choose an assigned session in the QR scanner to record attendance.',
-                  )}
+                  {t('Choose an event in the QR scanner to record attendance.')}
                 </p>
               </div>
             </section>
@@ -935,15 +937,15 @@ function Overview({
             <div>
               <ReaderIcon />
               <div>
-                <strong>{t('Plans & memberships')}</strong>
+                <strong>{t('Programs & memberships')}</strong>
                 <span>{t('Set dates and quotas per member')}</span>
               </div>
             </div>
             <div>
               <CalendarIcon />
               <div>
-                <strong>{t('Meetup sessions')}</strong>
-                <span>{t('Assign staff and organise check-ins')}</span>
+                <strong>{t('Meetup events')}</strong>
+                <span>{t('Assign admin and organise check-ins')}</span>
               </div>
             </div>
             <div>
@@ -1055,8 +1057,8 @@ function SelfOverview({ user }: { user: Identity }) {
         )}
         <p className="c-muted">
           {t(
-            user.role === 'staff'
-              ? 'Open Meetup sessions in the navigation to view your assignments. QR scanning will be added next.'
+            user.role === 'admin'
+              ? 'Open Meetup events in the navigation to view your assignments. QR scanning will be added next.'
               : 'Open Personal QR in the navigation to view your QR. Your membership screens will be added later.',
           )}
         </p>

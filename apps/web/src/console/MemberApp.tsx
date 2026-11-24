@@ -331,7 +331,7 @@ export function MemberApp({
                           <Code payload={qr.payload} />
                           <h2>{qr.name}</h2>
                           <strong>{qr.memberNumber}</strong>
-                          <p>{t('Show this QR to staff at your meetup.')}</p>
+                          <p>{t('Show this QR to admin at your meetup.')}</p>
                         </>
                       ) : (
                         <p>{t('QR temporarily unavailable')}</p>

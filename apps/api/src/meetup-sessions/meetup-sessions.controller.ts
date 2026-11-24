@@ -19,7 +19,7 @@ import {
   SessionGuard,
   type AuthenticatedRequest,
 } from '../auth/session.guard.js';
-import { AdminGuard } from '../auth/roles.guard.js';
+import { AdminGuard, SuperAdminGuard } from '../auth/roles.guard.js';
 import { DomainExceptionFilter } from '../common/domain/errors.js';
 import {
   parse,
@@ -126,10 +126,10 @@ export class AdminMeetupSessionsController {
       parse(z.object({ staffIds, version, reason }).strict(), body),
     );
   }
-  @Get(':id/audit') @Header('Cache-Control', 'no-store') history(
-    @Req() req: AuthenticatedRequest,
-    @Param('id') id: string,
-  ) {
+  @Get(':id/audit')
+  @UseGuards(SuperAdminGuard)
+  @Header('Cache-Control', 'no-store')
+  history(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.service.history(req.actor, id);
   }
 }

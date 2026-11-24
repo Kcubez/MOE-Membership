@@ -150,7 +150,7 @@ export function Scanner({ onAuthError }: Pick<CatalogProps, 'onAuthError'>) {
         if (!controller.signal.aborted && mounted.current) {
           setError(
             error instanceof ApiError && error.status === 404
-              ? 'This session is no longer available to you.'
+              ? 'This event is no longer available to you.'
               : messageOf(error),
           );
           if (
@@ -286,7 +286,7 @@ export function Scanner({ onAuthError }: Pick<CatalogProps, 'onAuthError'>) {
       <div className="c-scanner-grid">
         <section className="c-panel c-scanner-panel">
           <label>
-            {t('Find a session')}
+            {t('Find a event')}
             <input
               type="search"
               value={search}
@@ -295,9 +295,9 @@ export function Scanner({ onAuthError }: Pick<CatalogProps, 'onAuthError'>) {
             />
           </label>
           <label>
-            {t('Session')}
+            {t('Event')}
             <Select
-              aria-label={t('Session')}
+              aria-label={t('Event')}
               value={selected}
               disabled={loading || busy || !!pending || starting || decoding}
               onValueChange={(value) => {
@@ -308,7 +308,7 @@ export function Scanner({ onAuthError }: Pick<CatalogProps, 'onAuthError'>) {
               }}
             >
               <option value="">
-                {t(loading ? 'Loading sessions…' : 'Select a session')}
+                {t(loading ? 'Loading events…' : 'Select a event')}
               </option>
               {sessions.map((item) => (
                 <option key={item.id} value={item.id}>
@@ -318,7 +318,7 @@ export function Scanner({ onAuthError }: Pick<CatalogProps, 'onAuthError'>) {
             </Select>
             <small>
               {t(
-                'Showing up to 100 open sessions for today in Myanmar time. Search to narrow the list.',
+                'Showing up to 100 open events for today in Myanmar time. Search to narrow the list.',
               )}
             </small>
           </label>
@@ -326,7 +326,7 @@ export function Scanner({ onAuthError }: Pick<CatalogProps, 'onAuthError'>) {
           {!loading && !sessions.length && !loadError && (
             <p>
               {t(
-                'No open sessions for today. Ask Admin to create, open or assign a session.',
+                'No open events for today. Ask Admin to create, open or assign an event.',
               )}
             </p>
           )}
@@ -337,7 +337,7 @@ export function Scanner({ onAuthError }: Pick<CatalogProps, 'onAuthError'>) {
             }
             onClick={() => setRevision((value) => value + 1)}
           >
-            {t('Refresh sessions')}
+            {t('Refresh events')}
           </button>
           <div className="c-camera-preview">
             <video
@@ -497,7 +497,7 @@ export function Scanner({ onAuthError }: Pick<CatalogProps, 'onAuthError'>) {
       </div>
       <p className="c-footnote">
         {t(
-          'Verify the person matches the member name and number. Live scanning is limited to the session meetup date.',
+          'Verify the person matches the member name and number. Live scanning is limited to the event meetup date.',
         )}
       </p>
     </>

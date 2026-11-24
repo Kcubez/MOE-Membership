@@ -30,6 +30,7 @@ export function Plans({
   onAuthError,
   onNotice,
   trash,
+  canAudit,
 }: CatalogProps & { trash: boolean }) {
   const t = useText();
   const [search, setSearch] = useState('');
@@ -42,6 +43,14 @@ export function Plans({
   const [loading, setLoading] = useState(true);
   const [revision, setRevision] = useState(0);
   const [action, setAction] = useState<Action>();
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setApplied(search.trim());
+      setPage(0);
+      setCursors([undefined]);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [search]);
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
@@ -56,7 +65,9 @@ export function Plans({
         },
         controller.signal,
       )
-      .then(setData)
+      .then((result) => {
+        if (!controller.signal.aborted) setData(result);
+      })
       .catch((error) => {
         if (!controller.signal.aborted) {
           setError(messageOf(error));
@@ -77,12 +88,12 @@ export function Plans({
       <div className="c-page-heading">
         <div>
           <p className="c-eyebrow">MOE MEMBERSHIP SYSTEM</p>
-          <h1>{t(trash ? 'Trash' : 'Plans')}</h1>
+          <h1>{t(trash ? 'Trash' : 'Programs')}</h1>
           <p>
             {t(
               trash
-                ? 'Restore or permanently delete plans moved to Trash.'
-                : 'Reusable visit allowances. Set dates when assigning a membership.',
+                ? 'Restore or permanently delete programs moved to Trash.'
+                : 'Manage programs. Set visits and dates separately for each member at purchase.',
             )}
           </p>
         </div>
@@ -92,7 +103,7 @@ export function Plans({
             onClick={() => setAction({ kind: 'create' })}
           >
             <PlusIcon />
-            {t('Create plan')}
+            {t('Create program')}
           </button>
         )}
       </div>
@@ -108,8 +119,8 @@ export function Plans({
           >
             <MagnifyingGlassIcon />
             <input
-              aria-label={t('Search plans')}
-              placeholder={t('Search plans')}
+              aria-label={t('Search programs')}
+              placeholder={t('Search programs')}
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
@@ -118,14 +129,14 @@ export function Plans({
           <div className="c-filters">
             {!trash && (
               <Select
-                aria-label={t('Plan availability')}
+                aria-label={t('Program availability')}
                 value={archived}
                 onValueChange={(value) => {
                   setArchived(value);
                   reset();
                 }}
               >
-                <option value="">{t('All plans')}</option>
+                <option value="">{t('All programs')}</option>
                 <option value="false">{t('Available')}</option>
                 <option value="true">{t('Archived')}</option>
               </Select>
@@ -155,13 +166,13 @@ export function Plans({
         ) : !data?.items.length ? (
           <div className="c-empty">
             <ReaderIcon />
-            <h2>{t('No plans found')}</h2>
-            <p>{t('Create a plan with a visit quota to get started.')}</p>
+            <h2>{t('No programs found')}</h2>
+            <p>{t('Create a program to get started.')}</p>
             <button
               className="c-button secondary"
               onClick={() => setAction({ kind: 'create' })}
             >
-              {t('Create plan')}
+              {t('Create program')}
             </button>
           </div>
         ) : (
@@ -189,10 +200,6 @@ export function Plans({
                   <p className="c-plan-description">
                     {plan.description || '—'}
                   </p>
-                  <div className="c-plan-quota">
-                    <strong>{plan.totalVisits}</strong>
-                    <span>{t('visits per membership')}</span>
-                  </div>
                   {plan.benefits && (
                     <p className="c-plan-benefits">{plan.benefits}</p>
                   )}
@@ -253,13 +260,16 @@ export function Plans({
                           <Pencil1Icon />
                           {t('Edit')}
                         </button>
-                        <button
-                          className="c-icon-button bordered"
-                          aria-label={`Change history for ${plan.name}`}
-                          onClick={() => setAction({ kind: 'audit', plan })}
-                        >
-                          <ClockIcon />
-                        </button>
+                        {canAudit && (
+                          <button
+                            className="c-button secondary small"
+                            aria-label={`Change history for ${plan.name}`}
+                            onClick={() => setAction({ kind: 'audit', plan })}
+                          >
+                            <ClockIcon />
+                            {t('Change history')}
+                          </button>
+                        )}
                         <button
                           className="c-button secondary small"
                           onClick={() =>
@@ -278,7 +288,7 @@ export function Plans({
                     ) && (
                       <small>
                         {t(
-                          'This plan is linked to memberships or meetup sessions.',
+                          'This program is linked to memberships or meetup events.',
                         )}
                       </small>
                     )}
@@ -303,7 +313,7 @@ export function Plans({
       </section>
       <p className="c-footnote">
         {t(
-          'Editing a plan never changes the dates or quota of existing memberships.',
+          'Editing a program never changes the dates or quota of existing memberships.',
         )}
       </p>
       {action?.kind === 'audit' ? (
@@ -352,11 +362,11 @@ function PlanDialog({
       ? trashLabels[action.operation]
       : action.kind === 'availability'
         ? plan!.archived
-          ? 'Restore plan'
-          : 'Archive plan'
+          ? 'Restore program'
+          : 'Archive program'
         : action.kind === 'edit'
-          ? 'Edit plan'
-          : 'Create plan';
+          ? 'Edit program'
+          : 'Create program';
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -368,24 +378,23 @@ function PlanDialog({
         await catalogApi.planTrash(action.plan, action.operation, reason);
         onDone(
           action.operation === 'delete'
-            ? 'Plan permanently deleted.'
+            ? 'Program permanently deleted.'
             : action.operation === 'move'
-              ? 'Plan moved to Trash.'
-              : 'Plan restored from Trash.',
+              ? 'Program moved to Trash.'
+              : 'Program restored from Trash.',
         );
       } else if (action.kind === 'availability') {
         await catalogApi.availability(action.plan, reason);
         onDone(
           action.plan.archived
-            ? 'Plan restored. New memberships can be assigned.'
-            : 'Plan archived. Existing memberships are unchanged.',
+            ? 'Program restored. New memberships can be purchased.'
+            : 'Program archived. Existing memberships are unchanged.',
         );
       } else {
         const body = {
           name: String(form.get('name') || '').trim(),
           description: String(form.get('description') || '').trim(),
           benefits: String(form.get('benefits') || '').trim(),
-          totalVisits: Number(form.get('visits')),
           reason,
         };
         if (action.kind === 'edit')
@@ -396,8 +405,8 @@ function PlanDialog({
         else await catalogApi.createPlan(body);
         onDone(
           action.kind === 'edit'
-            ? 'Plan updated. Existing memberships kept their original quota.'
-            : 'Plan created. You can now assign memberships.',
+            ? 'Program updated. Existing memberships kept their original quota.'
+            : 'Program created. You can now purchase memberships.',
         );
       }
     } catch (error) {
@@ -411,20 +420,20 @@ function PlanDialog({
     <Dialog title={t(title)} onClose={onClose} busy={busy}>
       <p className="c-subtitle">
         {action.kind === 'trash'
-          ? `${action.plan.name} · ${t(action.operation === 'delete' ? 'This action cannot be undone.' : 'Existing memberships and meetup sessions are retained.')}`
+          ? `${action.plan.name} · ${t(action.operation === 'delete' ? 'This action cannot be undone.' : 'Existing memberships and meetup events are retained.')}`
           : action.kind === 'availability'
             ? t(
                 'Archiving stops new assignments and renewals. Existing memberships and history are retained.',
               )
             : t(
-                'Plan templates contain visits only. Membership dates are entered separately.',
+                'Programs contain descriptions and benefits. Set visits and dates when purchasing a membership.',
               )}
       </p>
       <form className="c-form" onSubmit={submit}>
         {(action.kind === 'edit' || action.kind === 'create') && (
           <>
             <label>
-              {t('Plan name')}
+              {t('Program name')}
               <input
                 name="name"
                 required
@@ -449,18 +458,6 @@ function PlanDialog({
                 maxLength={4000}
                 rows={3}
                 defaultValue={plan?.benefits}
-              />
-            </label>
-            <label>
-              {t('Total visits')}
-              <input
-                name="visits"
-                type="number"
-                min={1}
-                max={2147483647}
-                step={1}
-                required
-                defaultValue={plan?.totalVisits}
               />
             </label>
           </>
@@ -495,9 +492,9 @@ function PlanDialog({
                   ? title
                   : action.kind === 'availability'
                     ? plan!.archived
-                      ? 'Restore plan'
-                      : 'Archive plan'
-                    : 'Save plan',
+                      ? 'Restore program'
+                      : 'Archive program'
+                    : 'Save program',
               )}
             </BusyLabel>
           </button>

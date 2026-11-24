@@ -3,7 +3,7 @@
   "info": {
     "title": "MOE Shared API",
     "version": "0.11.1",
-    "description": "Shared React and Flutter API. Member phone/password and console email/password authentication; profiles, personal QR, memberships, sessions, check-ins, attendance history and Admin corrections. Native clients use X-MOE-Client: mobile and Bearer sessions; browser clients use trusted-origin HttpOnly cookies. Reports/export remain pending."
+    "description": "Shared React and Flutter API. Member phone/password and console email/password authentication; profiles, personal QR, memberships, sessions, check-ins, attendance history and Admin corrections. Native clients use X-MOE-Client: mobile and Bearer sessions; browser clients use trusted-origin HttpOnly cookies. Reports/export remain pending.\n\n2026-11-24: roles are super_admin, admin, member. Previous admin migrates to super_admin; staff migrates to admin. Console roles use email. Admin has all operational access except audit reads and reports/export (not yet implemented). Legacy plans/sessions/staff paths and field keys are retained. Programs have no totalVisits; membership purchase and renewal require totalVisits."
   },
   "servers": [
     {
@@ -78,7 +78,7 @@
                   "replaceExisting": {
                     "type": "boolean",
                     "default": false,
-                    "description": "Explicitly replace the authenticated member\u2019s previous Telegram connection. Never replaces another member\u2019s connection."
+                    "description": "Explicitly replace the authenticated member’s previous Telegram connection. Never replaces another member’s connection."
                   }
                 }
               }
@@ -677,7 +677,7 @@
                     "required": ["email"],
                     "properties": {
                       "role": {
-                        "enum": ["staff"]
+                        "enum": ["admin"]
                       }
                     },
                     "not": {
@@ -706,7 +706,7 @@
                   },
                   "role": {
                     "type": "string",
-                    "enum": ["member", "staff"]
+                    "enum": ["member", "admin"]
                   }
                 }
               }
@@ -716,7 +716,7 @@
       },
       "get": {
         "operationId": "listAccounts",
-        "summary": "Admin-only account directory",
+        "summary": "Console-only account directory",
         "security": [
           {
             "sessionCookie": []
@@ -756,7 +756,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["admin", "staff", "member"]
+              "enum": ["super_admin", "admin", "member"]
             }
           },
           {
@@ -1069,7 +1069,7 @@
                   },
                   "role": {
                     "type": "string",
-                    "enum": ["member", "staff"]
+                    "enum": ["member", "admin"]
                   },
                   "reason": {
                     "type": "string",
@@ -1086,7 +1086,7 @@
     "/api/v1/admin/users/summary": {
       "get": {
         "operationId": "getAccountSummary",
-        "summary": "Admin-only live account counts",
+        "summary": "Console-only live account counts",
         "security": [
           {
             "sessionCookie": []
@@ -1141,7 +1141,7 @@
     },
     "/api/v1/admin/plans": {
       "get": {
-        "summary": "List plans",
+        "summary": "List programs",
         "operationId": "getApiV1AdminPlans",
         "security": [
           {
@@ -1151,7 +1151,7 @@
             "bearerSession": []
           }
         ],
-        "description": "Admin only. Dates are YYYY-MM-DD, inclusive in Asia/Yangon. No automatic membership dates. Writes require a reason; editing uses version to reject stale updates. Cancelled periods do not block replacements. Status precedence: Cancelled > Completed > Expired > Upcoming > Active.",
+        "description": "Super Admin and Admin. Dates are YYYY-MM-DD, inclusive in Asia/Yangon. No automatic membership dates. Writes require a reason; editing uses version to reject stale updates. Cancelled periods do not block replacements. Status precedence: Cancelled > Completed > Expired > Upcoming > Active.",
         "responses": {
           "200": {
             "description": "Success",
@@ -1276,7 +1276,7 @@
         ]
       },
       "post": {
-        "summary": "Create a dates-free plan",
+        "summary": "Create a dates-free program",
         "operationId": "postApiV1AdminPlans",
         "security": [
           {
@@ -1286,7 +1286,7 @@
             "bearerSession": []
           }
         ],
-        "description": "Admin only. Dates are YYYY-MM-DD, inclusive in Asia/Yangon. No automatic membership dates. Writes require a reason; editing uses version to reject stale updates. Cancelled periods do not block replacements. Status precedence: Cancelled > Completed > Expired > Upcoming > Active.",
+        "description": "Super Admin and Admin. Dates are YYYY-MM-DD, inclusive in Asia/Yangon. No automatic membership dates. Writes require a reason; editing uses version to reject stale updates. Cancelled periods do not block replacements. Status precedence: Cancelled > Completed > Expired > Upcoming > Active.",
         "responses": {
           "200": {
             "description": "Success",
@@ -1373,7 +1373,7 @@
     },
     "/api/v1/admin/plans/{id}": {
       "get": {
-        "summary": "Read plan",
+        "summary": "Read program",
         "operationId": "getApiV1AdminPlansId",
         "security": [
           {
@@ -1383,7 +1383,7 @@
             "bearerSession": []
           }
         ],
-        "description": "Admin only. Dates are YYYY-MM-DD, inclusive in Asia/Yangon. No automatic membership dates. Writes require a reason; editing uses version to reject stale updates. Cancelled periods do not block replacements. Status precedence: Cancelled > Completed > Expired > Upcoming > Active.",
+        "description": "Super Admin and Admin. Dates are YYYY-MM-DD, inclusive in Asia/Yangon. No automatic membership dates. Writes require a reason; editing uses version to reject stale updates. Cancelled periods do not block replacements. Status precedence: Cancelled > Completed > Expired > Upcoming > Active.",
         "responses": {
           "200": {
             "description": "Success",
@@ -1468,7 +1468,7 @@
         ]
       },
       "patch": {
-        "summary": "Edit plan without changing existing memberships",
+        "summary": "Edit program without changing existing memberships",
         "operationId": "patchApiV1AdminPlansId",
         "security": [
           {
@@ -1478,7 +1478,7 @@
             "bearerSession": []
           }
         ],
-        "description": "Admin only. Dates are YYYY-MM-DD, inclusive in Asia/Yangon. No automatic membership dates. Writes require a reason; editing uses version to reject stale updates. Cancelled periods do not block replacements. Status precedence: Cancelled > Completed > Expired > Upcoming > Active.",
+        "description": "Super Admin and Admin. Dates are YYYY-MM-DD, inclusive in Asia/Yangon. No automatic membership dates. Writes require a reason; editing uses version to reject stale updates. Cancelled periods do not block replacements. Status precedence: Cancelled > Completed > Expired > Upcoming > Active.",
         "responses": {
           "200": {
             "description": "Success",
@@ -1613,7 +1613,7 @@
     },
     "/api/v1/admin/plans/{id}/availability": {
       "patch": {
-        "summary": "Archive or restore a plan",
+        "summary": "Archive or restore a program",
         "operationId": "patchApiV1AdminPlansIdAvailability",
         "security": [
           {
@@ -1623,7 +1623,7 @@
             "bearerSession": []
           }
         ],
-        "description": "Admin only. Dates are YYYY-MM-DD, inclusive in Asia/Yangon. No automatic membership dates. Writes require a reason; editing uses version to reject stale updates. Cancelled periods do not block replacements. Status precedence: Cancelled > Completed > Expired > Upcoming > Active.",
+        "description": "Super Admin and Admin. Dates are YYYY-MM-DD, inclusive in Asia/Yangon. No automatic membership dates. Writes require a reason; editing uses version to reject stale updates. Cancelled periods do not block replacements. Status precedence: Cancelled > Completed > Expired > Upcoming > Active.",
         "responses": {
           "200": {
             "description": "Success",
@@ -1736,7 +1736,7 @@
     },
     "/api/v1/admin/plans/{id}/trash": {
       "patch": {
-        "summary": "Move a plan to Trash, restore it, or delete it permanently",
+        "summary": "Move a program to Trash, restore it, or delete it permanently",
         "operationId": "changePlanTrash",
         "security": [
           {
@@ -1746,7 +1746,7 @@
             "bearerSession": []
           }
         ],
-        "description": "Admin only. Restore preserves the previous availability. Permanent deletion requires a trashed plan with no linked memberships or meetup sessions. All actions require the current version and a reason.",
+        "description": "Super Admin and Admin. Restore preserves the previous availability. Permanent deletion requires a trashed program with no linked memberships or meetup Events. All actions require the current version and a reason.",
         "parameters": [
           {
             "in": "path",
@@ -1822,7 +1822,7 @@
     },
     "/api/v1/admin/plans/{id}/audit": {
       "get": {
-        "summary": "Read plan audit",
+        "summary": "Read program audit",
         "operationId": "getApiV1AdminPlansIdAudit",
         "security": [
           {
@@ -1832,7 +1832,7 @@
             "bearerSession": []
           }
         ],
-        "description": "Admin only. Dates are YYYY-MM-DD, inclusive in Asia/Yangon. No automatic membership dates. Writes require a reason; editing uses version to reject stale updates. Cancelled periods do not block replacements. Status precedence: Cancelled > Completed > Expired > Upcoming > Active.",
+        "description": "Super Admin only. Admin and Member accounts receive 403. Audit records remain retained for all writes.",
         "responses": {
           "200": {
             "description": "Success",
@@ -1937,7 +1937,7 @@
             "bearerSession": []
           }
         ],
-        "description": "Admin only. Dates are YYYY-MM-DD, inclusive in Asia/Yangon. No automatic membership dates. Writes require a reason; editing uses version to reject stale updates. Cancelled periods do not block replacements. Status precedence: Cancelled > Completed > Expired > Upcoming > Active.",
+        "description": "Super Admin and Admin. Dates are YYYY-MM-DD, inclusive in Asia/Yangon. No automatic membership dates. Writes require a reason; editing uses version to reject stale updates. Cancelled periods do not block replacements. Status precedence: Cancelled > Completed > Expired > Upcoming > Active.",
         "responses": {
           "200": {
             "description": "Success",
@@ -2067,7 +2067,7 @@
         ]
       },
       "post": {
-        "summary": "Assign membership with explicit dates",
+        "summary": "Purchase membership with explicit dates",
         "operationId": "postApiV1AdminMemberships",
         "security": [
           {
@@ -2077,7 +2077,7 @@
             "bearerSession": []
           }
         ],
-        "description": "Admin only. Dates are YYYY-MM-DD, inclusive in Asia/Yangon. No automatic membership dates. Writes require a reason; editing uses version to reject stale updates. Cancelled periods do not block replacements. Status precedence: Cancelled > Completed > Expired > Upcoming > Active. Assignment/renewal is restricted to currently enabled member-role accounts. Admin and Staff targets are rejected with 409 INVALID_MEMBER_ROLE after account locking; existing history remains intact.",
+        "description": "Super Admin and Admin only. Required totalVisits is set independently for this member; programs do not provide a default quota. Explicit inclusive startDate/endDate and reason are required. Only enabled Member recipients are eligible. Overlap rules and version validation apply. This records a membership purchase; it does not charge a payment.",
         "responses": {
           "200": {
             "description": "Success",
@@ -2174,7 +2174,7 @@
             "bearerSession": []
           }
         ],
-        "description": "Admin only. Dates are YYYY-MM-DD, inclusive in Asia/Yangon. No automatic membership dates. Writes require a reason; editing uses version to reject stale updates. Cancelled periods do not block replacements. Status precedence: Cancelled > Completed > Expired > Upcoming > Active.",
+        "description": "Super Admin and Admin. Dates are YYYY-MM-DD, inclusive in Asia/Yangon. No automatic membership dates. Writes require a reason; editing uses version to reject stale updates. Cancelled periods do not block replacements. Status precedence: Cancelled > Completed > Expired > Upcoming > Active.",
         "responses": {
           "200": {
             "description": "Success",
@@ -2269,7 +2269,7 @@
             "bearerSession": []
           }
         ],
-        "description": "Admin only. Dates are YYYY-MM-DD, inclusive in Asia/Yangon. No automatic membership dates. Writes require a reason; editing uses version to reject stale updates. Cancelled periods do not block replacements. Status precedence: Cancelled > Completed > Expired > Upcoming > Active.",
+        "description": "Super Admin and Admin may edit a membership, including extending endDate. Supply the current version, both dates, totalVisits and a reason. Extending the date alone preserves the visit allowance. Attendance must remain inside the period; overlapping noncancelled memberships are rejected. Old and new values are audited.",
         "responses": {
           "200": {
             "description": "Success",
@@ -2407,7 +2407,7 @@
             "bearerSession": []
           }
         ],
-        "description": "Admin only. Dates are YYYY-MM-DD, inclusive in Asia/Yangon. No automatic membership dates. Writes require a reason; editing uses version to reject stale updates. Cancelled periods do not block replacements. Status precedence: Cancelled > Completed > Expired > Upcoming > Active. Assignment/renewal is restricted to currently enabled member-role accounts. Admin and Staff targets are rejected with 409 INVALID_MEMBER_ROLE after account locking; existing history remains intact.",
+        "description": "Super Admin and Admin only. Required totalVisits is set independently for this member; programs do not provide a default quota. Explicit inclusive startDate/endDate and reason are required. Only enabled Member recipients are eligible. Overlap rules and version validation apply. This records a membership purchase; it does not charge a payment.",
         "responses": {
           "200": {
             "description": "Success",
@@ -2497,7 +2497,13 @@
               "schema": {
                 "type": "object",
                 "additionalProperties": false,
-                "required": ["startDate", "endDate", "planVersion", "reason"],
+                "required": [
+                  "startDate",
+                  "endDate",
+                  "planVersion",
+                  "reason",
+                  "totalVisits"
+                ],
                 "properties": {
                   "startDate": {
                     "type": "string",
@@ -2515,6 +2521,12 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 500
+                  },
+                  "totalVisits": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 2147483647,
+                    "description": "Visit allowance for this individual membership, entered at purchase or renewal."
                   }
                 }
               }
@@ -2535,7 +2547,7 @@
             "bearerSession": []
           }
         ],
-        "description": "Admin only. Dates are YYYY-MM-DD, inclusive in Asia/Yangon. No automatic membership dates. Writes require a reason; editing uses version to reject stale updates. Cancelled periods do not block replacements. Status precedence: Cancelled > Completed > Expired > Upcoming > Active.",
+        "description": "Super Admin and Admin. Dates are YYYY-MM-DD, inclusive in Asia/Yangon. No automatic membership dates. Writes require a reason; editing uses version to reject stale updates. Cancelled periods do not block replacements. Status precedence: Cancelled > Completed > Expired > Upcoming > Active.",
         "responses": {
           "200": {
             "description": "Success",
@@ -2655,7 +2667,7 @@
             "bearerSession": []
           }
         ],
-        "description": "Admin only. Dates are YYYY-MM-DD, inclusive in Asia/Yangon. No automatic membership dates. Writes require a reason; editing uses version to reject stale updates. Cancelled periods do not block replacements. Status precedence: Cancelled > Completed > Expired > Upcoming > Active.",
+        "description": "Super Admin only. Admin and Member accounts receive 403. Audit records remain retained for all writes.",
         "responses": {
           "200": {
             "description": "Success",
@@ -2961,7 +2973,7 @@
     },
     "/api/v1/sessions": {
       "get": {
-        "summary": "List visible meetup sessions",
+        "summary": "List visible meetup Events",
         "operationId": "getApiV1Sessions",
         "security": [
           {
@@ -2971,7 +2983,7 @@
             "bearerSession": []
           }
         ],
-        "description": "Admin manages sessions. Staff can only read currently assigned sessions and cannot see the staff roster. Members are denied. Dates are explicit YYYY-MM-DD in Asia/Yangon. Creation rejects archived plans and assignments require enabled staff accounts. State/roster writes require current version and a reason; stale versions return VERSION_CONFLICT. No scan or attendance side effects. Name, plan and meetup date remain immutable in this increment.",
+        "description": "Admin manages Events. Admins can manage and scan all events; assignments are optional metadata. Members are denied. Dates are explicit YYYY-MM-DD in Asia/Yangon. Creation rejects archived programs and assignments require enabled staff accounts. State/roster writes require current version and a reason; stale versions return VERSION_CONFLICT. No scan or attendance side effects. Name, program and meetup date remain immutable in this increment.",
         "responses": {
           "200": {
             "description": "Success",
@@ -3120,7 +3132,7 @@
             "bearerSession": []
           }
         ],
-        "description": "Admin manages sessions. Staff can only read currently assigned sessions and cannot see the staff roster. Members are denied. Dates are explicit YYYY-MM-DD in Asia/Yangon. Creation rejects archived plans and assignments require enabled staff accounts. State/roster writes require current version and a reason; stale versions return VERSION_CONFLICT. No scan or attendance side effects. Name, plan and meetup date remain immutable in this increment.",
+        "description": "Admin manages sessions. Admins can manage and scan all events; assignments are optional metadata. Members are denied. Dates are explicit YYYY-MM-DD in Asia/Yangon. Creation rejects archived plans and assignments require enabled staff accounts. State/roster writes require current version and a reason; stale versions return VERSION_CONFLICT. No scan or attendance side effects. Name, plan and meetup date remain immutable in this increment.",
         "responses": {
           "200": {
             "description": "Success",
@@ -3207,7 +3219,7 @@
     },
     "/api/v1/admin/sessions": {
       "post": {
-        "summary": "Create meetup session",
+        "summary": "Create meetup Event",
         "operationId": "postApiV1AdminSessions",
         "security": [
           {
@@ -3217,7 +3229,7 @@
             "bearerSession": []
           }
         ],
-        "description": "Admin manages sessions. Staff can only read currently assigned sessions and cannot see the staff roster. Members are denied. Dates are explicit YYYY-MM-DD in Asia/Yangon. Creation rejects archived plans and assignments require enabled staff accounts. State/roster writes require current version and a reason; stale versions return VERSION_CONFLICT. No scan or attendance side effects. Name, plan and meetup date remain immutable in this increment.",
+        "description": "Admin manages Events. Admins can manage and scan all events; assignments are optional metadata. Members are denied. Dates are explicit YYYY-MM-DD in Asia/Yangon. Creation rejects archived programs and assignments require enabled staff accounts. State/roster writes require current version and a reason; stale versions return VERSION_CONFLICT. No scan or attendance side effects. Name, program and meetup date remain immutable in this increment.",
         "responses": {
           "200": {
             "description": "Success",
@@ -3304,7 +3316,7 @@
     },
     "/api/v1/admin/sessions/{id}/state": {
       "patch": {
-        "summary": "Open or close a meetup session",
+        "summary": "Open or close a meetup Event",
         "operationId": "patchApiV1AdminSessionsIdState",
         "security": [
           {
@@ -3314,7 +3326,7 @@
             "bearerSession": []
           }
         ],
-        "description": "Admin manages sessions. Staff can only read currently assigned sessions and cannot see the staff roster. Members are denied. Dates are explicit YYYY-MM-DD in Asia/Yangon. Creation rejects archived plans and assignments require enabled staff accounts. State/roster writes require current version and a reason; stale versions return VERSION_CONFLICT. No scan or attendance side effects. Name, plan and meetup date remain immutable in this increment.",
+        "description": "Admin manages Events. Admins can manage and scan all events; assignments are optional metadata. Members are denied. Dates are explicit YYYY-MM-DD in Asia/Yangon. Creation rejects archived programs and assignments require enabled staff accounts. State/roster writes require current version and a reason; stale versions return VERSION_CONFLICT. No scan or attendance side effects. Name, program and meetup date remain immutable in this increment.",
         "responses": {
           "200": {
             "description": "Success",
@@ -3421,7 +3433,7 @@
             "bearerSession": []
           }
         ],
-        "description": "Admin manages sessions. Staff can only read currently assigned sessions and cannot see the staff roster. Members are denied. Dates are explicit YYYY-MM-DD in Asia/Yangon. Creation rejects archived plans and assignments require enabled staff accounts. State/roster writes require current version and a reason; stale versions return VERSION_CONFLICT. No scan or attendance side effects. Name, plan and meetup date remain immutable in this increment.",
+        "description": "Admin manages Events. Admins can manage and scan all events; assignments are optional metadata. Members are denied. Dates are explicit YYYY-MM-DD in Asia/Yangon. Creation rejects archived programs and assignments require enabled staff accounts. State/roster writes require current version and a reason; stale versions return VERSION_CONFLICT. No scan or attendance side effects. Name, program and meetup date remain immutable in this increment.",
         "responses": {
           "200": {
             "description": "Success",
@@ -3518,7 +3530,7 @@
     },
     "/api/v1/admin/sessions/{id}/audit": {
       "get": {
-        "summary": "Read meetup session audit history",
+        "summary": "Read meetup Event audit history",
         "operationId": "getApiV1AdminSessionsIdAudit",
         "security": [
           {
@@ -3528,7 +3540,7 @@
             "bearerSession": []
           }
         ],
-        "description": "Admin manages sessions. Staff can only read currently assigned sessions and cannot see the staff roster. Members are denied. Dates are explicit YYYY-MM-DD in Asia/Yangon. Creation rejects archived plans and assignments require enabled staff accounts. State/roster writes require current version and a reason; stale versions return VERSION_CONFLICT. No scan or attendance side effects. Name, plan and meetup date remain immutable in this increment.",
+        "description": "Super Admin only. Admin and Member accounts receive 403. Audit records remain retained for all writes.",
         "responses": {
           "200": {
             "description": "Success",
@@ -3632,7 +3644,7 @@
             "bearerSession": []
           }
         ],
-        "description": "Own QR is available to any authenticated account after temporary-password replacement, even without a membership. Admin-only metadata/rotation/history do not return payloads. Regeneration checks the current version and records only metadata plus the reason; the previous QR is invalid. Responses are private and no-store. No public QR lookup or validation endpoint exists. QR content must be treated as opaque by clients; rendering or decoding does not establish check-in eligibility. Staff scanning/attendance will be a separate protected operation.",
+        "description": "Own QR is available to any authenticated account after temporary-password replacement, even without a membership. Console-only metadata/rotation/history do not return payloads. Regeneration checks the current version and records only metadata plus the reason; the previous QR is invalid. Responses are private and no-store. No public QR lookup or validation endpoint exists. QR content must be treated as opaque by clients; rendering or decoding does not establish check-in eligibility. Staff scanning/attendance will be a separate protected operation.",
         "responses": {
           "200": {
             "description": "Success",
@@ -3718,7 +3730,7 @@
             "bearerSession": []
           }
         ],
-        "description": "Own QR is available to any authenticated account after temporary-password replacement, even without a membership. Admin-only metadata/rotation/history do not return payloads. Regeneration checks the current version and records only metadata plus the reason; the previous QR is invalid. Responses are private and no-store. No public QR lookup or validation endpoint exists. QR content must be treated as opaque by clients; rendering or decoding does not establish check-in eligibility. Staff scanning/attendance will be a separate protected operation.",
+        "description": "Own QR is available to any authenticated account after temporary-password replacement, even without a membership. Console-only metadata/rotation/history do not return payloads. Regeneration checks the current version and records only metadata plus the reason; the previous QR is invalid. Responses are private and no-store. No public QR lookup or validation endpoint exists. QR content must be treated as opaque by clients; rendering or decoding does not establish check-in eligibility. Staff scanning/attendance will be a separate protected operation.",
         "responses": {
           "200": {
             "description": "Success",
@@ -3814,7 +3826,7 @@
             "bearerSession": []
           }
         ],
-        "description": "Own QR is available to any authenticated account after temporary-password replacement, even without a membership. Admin-only metadata/rotation/history do not return payloads. Regeneration checks the current version and records only metadata plus the reason; the previous QR is invalid. Responses are private and no-store. No public QR lookup or validation endpoint exists. QR content must be treated as opaque by clients; rendering or decoding does not establish check-in eligibility. Staff scanning/attendance will be a separate protected operation.",
+        "description": "Own QR is available to any authenticated account after temporary-password replacement, even without a membership. Console-only metadata/rotation/history do not return payloads. Regeneration checks the current version and records only metadata plus the reason; the previous QR is invalid. Responses are private and no-store. No public QR lookup or validation endpoint exists. QR content must be treated as opaque by clients; rendering or decoding does not establish check-in eligibility. Staff scanning/attendance will be a separate protected operation.",
         "responses": {
           "200": {
             "description": "Success",
@@ -3933,7 +3945,7 @@
             "bearerSession": []
           }
         ],
-        "description": "Own QR is available to any authenticated account after temporary-password replacement, even without a membership. Admin-only metadata/rotation/history do not return payloads. Regeneration checks the current version and records only metadata plus the reason; the previous QR is invalid. Responses are private and no-store. No public QR lookup or validation endpoint exists. QR content must be treated as opaque by clients; rendering or decoding does not establish check-in eligibility. Staff scanning/attendance will be a separate protected operation.",
+        "description": "Super Admin only. Admin and Member accounts receive 403. Audit records remain retained for all writes.",
         "responses": {
           "200": {
             "description": "Success",
@@ -4048,7 +4060,7 @@
             }
           }
         ],
-        "description": "Admin or assigned Staff only. Requires open session on its Yangon meetup date. Current QR/account/assignment/membership/quota are checked transactionally. Repeat scans consume once. Preserve requestId and exact payload on ambiguous network retries; no automatic new operation. Replays require current authorization and QR but may recover committed results after session closes. Failures disclose no member identity. No backfill/cancellation endpoint in this increment.",
+        "description": "Admin or Super Admin only. Requires open session on its Yangon meetup date. Current QR/account/membership/quota are checked transactionally. Repeat scans consume once. Preserve requestId and exact payload on ambiguous network retries; no automatic new operation. Replays require current authorization and QR but may recover committed results after session closes. Failures disclose no member identity. No backfill/cancellation endpoint in this increment.",
         "requestBody": {
           "required": true,
           "content": {
@@ -4541,7 +4553,7 @@
       "post": {
         "operationId": "backfillAttendance",
         "summary": "Admin records historical attendance",
-        "description": "Admin only. Historical session date must be before today in Asia/Yangon, and match occurredAt. Open or closed session allowed. No QR required. Target account must currently be enabled; a noncancelled membership must cover the historical date and have current available quota. A term expired today remains eligible if it covered that date. Atomic attendance, quota, operation record and reasoned audit. Exact retries use the same requestId and normalized input; replay returns original result and never recreates cancelled attendance. Idempotency keys share the live-scan namespace per actor. Different deliberate requests for existing effective attendance return ALREADY_CHECKED_IN and original time. Failed checks disclose no identity.",
+        "description": "Super Admin and Admin. Historical Event date must be before today in Asia/Yangon, and match occurredAt. Open or closed Event allowed. No QR required. Target account must currently be enabled; a noncancelled membership must cover the historical date and have current available quota. A term expired today remains eligible if it covered that date. Atomic attendance, quota, operation record and reasoned audit. Exact retries use the same requestId and normalized input; replay returns original result and never recreates cancelled attendance. Idempotency keys share the live-scan namespace per actor. Different deliberate requests for existing effective attendance return ALREADY_CHECKED_IN and original time. Failed checks disclose no identity.",
         "security": [
           {
             "sessionCookie": []
@@ -4720,7 +4732,7 @@
           "portal": {
             "type": "string",
             "enum": ["member"],
-            "description": "Optional for member phone login. Admin and Staff must use ConsoleCredentials."
+            "description": "Optional for member phone login. Super Admin and Admin must use ConsoleCredentials."
           },
           "phone": {
             "type": "string",
@@ -4774,7 +4786,7 @@
           },
           "role": {
             "type": "string",
-            "enum": ["member", "staff", "admin"]
+            "enum": ["member", "admin", "super_admin"]
           },
           "mustChangePassword": {
             "type": "boolean"
@@ -4847,7 +4859,7 @@
           },
           "role": {
             "type": "string",
-            "enum": ["member", "staff", "admin"]
+            "enum": ["member", "admin", "super_admin"]
           },
           "enabled": {
             "type": "boolean"
@@ -4885,13 +4897,7 @@
       "PlanInput": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "name",
-          "description",
-          "benefits",
-          "totalVisits",
-          "reason"
-        ],
+        "required": ["name", "description", "benefits", "reason"],
         "properties": {
           "name": {
             "type": "string",
@@ -4905,11 +4911,6 @@
           "benefits": {
             "type": "string",
             "maxLength": 4000
-          },
-          "totalVisits": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 2147483647
           },
           "reason": {
             "type": "string",
@@ -4927,7 +4928,8 @@
           "planVersion",
           "startDate",
           "endDate",
-          "reason"
+          "reason",
+          "totalVisits"
         ],
         "properties": {
           "userId": {
@@ -4952,6 +4954,12 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 500
+          },
+          "totalVisits": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647,
+            "description": "Visit allowance for this individual membership, entered at purchase or renewal."
           }
         }
       },
@@ -4966,7 +4974,6 @@
           "name",
           "description",
           "benefits",
-          "totalVisits",
           "archived",
           "version",
           "createdAt",
@@ -4984,10 +4991,6 @@
           },
           "benefits": {
             "type": "string"
-          },
-          "totalVisits": {
-            "type": "integer",
-            "minimum": 1
           },
           "trashedAt": {
             "type": ["string", "null"],

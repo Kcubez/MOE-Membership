@@ -20,7 +20,7 @@
       "value": "http://localhost:4000"
     },
     {
-      "key": "adminPhone",
+      "key": "adminEmail",
       "value": ""
     },
     {
@@ -81,7 +81,7 @@
         },
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"phone\": \"{{adminPhone}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+          "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
           "options": {
             "raw": {
               "language": "json"

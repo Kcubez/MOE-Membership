@@ -1,6 +1,6 @@
 {
   "info": {
-    "name": "MOE Plans and Memberships",
+    "name": "MOE Programs and Memberships",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "description": "Writes real data. Use a development database. Set Admin credentials locally, choose an existing enabled memberId, and explicitly supply all dates. Renewal dates must not overlap. Re-import with Replace to update. Do not commit credentials or tokens. Assignment/renewal recipients must currently have Member role; Admin and Staff IDs return INVALID_MEMBER_ROLE."
   },
@@ -20,7 +20,7 @@
       "value": "http://localhost:4000"
     },
     {
-      "key": "adminPhone",
+      "key": "adminEmail",
       "value": ""
     },
     {
@@ -86,7 +86,7 @@
         "url": "{{baseUrl}}/api/v1/auth/login",
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"phone\": \"{{adminPhone}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+          "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -111,7 +111,7 @@
       ]
     },
     {
-      "name": "Create plan",
+      "name": "Create program",
       "request": {
         "method": "POST",
         "header": [
@@ -127,7 +127,7 @@
         "url": "{{baseUrl}}/api/v1/admin/plans",
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"name\": \"Postman test plan\",\n  \"description\": \"Manual test\",\n  \"benefits\": \"Meetups\",\n  \"totalVisits\": 10,\n  \"reason\": \"Test plan creation\"\n}",
+          "raw": "{\n  \"name\": \"Postman test plan\",\n  \"description\": \"Manual test\",\n  \"benefits\": \"Meetups\",\n  \"reason\": \"Test plan creation\"\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -149,7 +149,7 @@
       ]
     },
     {
-      "name": "List plans",
+      "name": "List programs",
       "request": {
         "method": "GET",
         "header": [
@@ -177,7 +177,7 @@
       ]
     },
     {
-      "name": "Assign membership \u2014 enter dates first",
+      "name": "Purchase membership — enter dates first",
       "request": {
         "method": "POST",
         "header": [
@@ -193,7 +193,7 @@
         "url": "{{baseUrl}}/api/v1/admin/memberships",
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"userId\": \"{{memberId}}\",\n  \"planId\": \"{{planId}}\",\n  \"planVersion\": {{planVersion}},\n  \"startDate\": \"{{startDate}}\",\n  \"endDate\": \"{{endDate}}\",\n  \"reason\": \"Manual membership assignment\"\n}",
+          "raw": "{\n  \"totalVisits\": 10,\n  \"userId\": \"{{memberId}}\",\n  \"planId\": \"{{planId}}\",\n  \"planVersion\": {{planVersion}},\n  \"startDate\": \"{{startDate}}\",\n  \"endDate\": \"{{endDate}}\",\n  \"reason\": \"Manual membership assignment\"\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -271,7 +271,7 @@
       ]
     },
     {
-      "name": "Renew \u2014 explicitly enter new dates",
+      "name": "Renew — explicitly enter new dates",
       "request": {
         "method": "POST",
         "header": [
@@ -287,7 +287,7 @@
         "url": "{{baseUrl}}/api/v1/admin/memberships/{{membershipId}}/renew",
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"startDate\": \"{{renewStartDate}}\",\n  \"endDate\": \"{{renewEndDate}}\",\n  \"planVersion\": {{planVersion}},\n  \"reason\": \"Manual renewal\"\n}",
+          "raw": "{\n  \"totalVisits\": 10,\n  \"startDate\": \"{{renewStartDate}}\",\n  \"endDate\": \"{{renewEndDate}}\",\n  \"planVersion\": {{planVersion}},\n  \"reason\": \"Manual renewal\"\n}",
           "options": {
             "raw": {
               "language": "json"

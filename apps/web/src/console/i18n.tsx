@@ -8,22 +8,22 @@ const my: Record<string, string> = {
   'Unable to sign in. Check your phone number or email and password, then try again.':
     'ဝင်၍မရပါ။ ဖုန်းနံပါတ် သို့မဟုတ် အီးမေးလ်နှင့် စကားဝှက်ကို စစ်ပြီး ပြန်ကြိုးစားပါ။',
   Trash: 'အမှိုက်ပုံး',
-  'Restore or permanently delete plans moved to Trash.':
+  'Restore or permanently delete programs moved to Trash.':
     'အမှိုက်ပုံးထဲရှိ အစီအစဉ်များကို ပြန်ယူနိုင်သည် သို့မဟုတ် အပြီးဖျက်နိုင်သည်။',
   'Move to Trash': 'ဖျက်ရန် ဖယ်ထားမည်',
   'Restore from Trash': 'ပြန်ယူမည်',
   'Delete permanently': 'အပြီးဖျက်မည်',
   'This action cannot be undone.': 'ဤလုပ်ဆောင်ချက်ကို ပြန်ပြင်၍ မရပါ။',
-  'Existing memberships and meetup sessions are retained.':
+  'Existing memberships and meetup events are retained.':
     'ရှိပြီးသား အသင်းဝင်မှုနှင့် တွေ့ဆုံပွဲမှတ်တမ်းများကို ဆက်လက်သိမ်းထားပါမည်။',
-  'This plan is linked to memberships or meetup sessions.':
+  'This program is linked to memberships or meetup events.':
     'ဤအစီအစဉ်ကို အသင်းဝင်မှု သို့မဟုတ် တွေ့ဆုံပွဲတစ်ခုနှင့် ချိတ်ထားပါသည်။',
-  'Plan permanently deleted.': 'အစီအစဉ်ကို အပြီးဖျက်ပြီးပါပြီ။',
-  'Plan moved to Trash.': 'အစီအစဉ်ကို ဖျက်ရန် ဖယ်ထားပြီးပါပြီ။',
-  'Plan restored from Trash.': 'အစီအစဉ်ကို ပြန်ယူပြီးပါပြီ။',
+  'Program permanently deleted.': 'အစီအစဉ်ကို အပြီးဖျက်ပြီးပါပြီ။',
+  'Program moved to Trash.': 'အစီအစဉ်ကို ဖျက်ရန် ဖယ်ထားပြီးပါပြီ။',
+  'Program restored from Trash.': 'အစီအစဉ်ကို ပြန်ယူပြီးပါပြီ။',
   'Your memberships, visits and attendance in one place.':
     'သင်၏ အသင်းဝင်မှု၊ လက်ကျန်အကြိမ်နှင့် တက်ရောက်မှုများကို ဤနေရာတွင် ကြည့်နိုင်ပါသည်။',
-  'Show this QR to staff at your meetup.':
+  'Show this QR to admin at your meetup.':
     'တွေ့ဆုံပွဲတွင် ဤ QR ကို ဝန်ထမ်းအား ပြပါ။',
   'No membership assigned yet. Please contact MOE.':
     'အသင်းဝင်မှု မသတ်မှတ်ရသေးပါ။ MOE သို့ ဆက်သွယ်ပါ။',
@@ -32,13 +32,13 @@ const my: Record<string, string> = {
   'QR temporarily unavailable': 'QR ကို ယာယီ မရနိုင်ပါ',
 
   'Select an account': 'အကောင့် ရွေးပါ',
-  'Select an available plan': 'အသုံးပြုနိုင်သော အစီအစဉ် ရွေးပါ',
-  'Search if your plan is not in the first 100 results.':
+  'Select an available program': 'အသုံးပြုနိုင်သော အစီအစဉ် ရွေးပါ',
+  'Search if your program is not in the first 100 results.':
     'ပထမရလဒ် ၁၀၀ တွင် မတွေ့ပါက အစီအစဉ်အမည်ဖြင့် ရှာပါ။',
-  'Select a plan to see its quota.': 'အကြိမ်ရေကို ကြည့်ရန် အစီအစဉ် ရွေးပါ။',
+  'Select a program to see its quota.': 'အကြိမ်ရေကို ကြည့်ရန် အစီအစဉ် ရွေးပါ။',
   'No unused visits are carried forward. Both dates must be entered explicitly.':
     'မသုံးရသေးသော အကြိမ်များကို နောက်ကာလသို့ မသယ်ဆောင်ပါ။ စရက်နှင့် ဆုံးရက် နှစ်ခုလုံး ထည့်ပါ။',
-  'Choose an account and plan, then enter both dates yourself.':
+  'Choose an account and program, then enter both dates yourself.':
     'အကောင့်နှင့် အစီအစဉ် ရွေးပြီး စရက်နှင့် ဆုံးရက်ကို ထည့်ပါ။',
 
   'Memberships can only be assigned or renewed for member accounts.':
@@ -64,7 +64,7 @@ const my: Record<string, string> = {
   'Retry cancellation': 'ပယ်ဖျက်မှု ပြန်စမ်းမည်',
   'Confirm cancellation': 'ပယ်ဖျက်မှု အတည်ပြုမည်',
 
-  'Choose a session': 'တွေ့ဆုံပွဲ ရွေးပါ',
+  'Choose a event': 'တွေ့ဆုံပွဲ ရွေးပါ',
 
   'Backfill attendance': 'တက်ရောက်မှု နောက်ကြောင်းပြန်ဖြည့်ရန်',
   'Record actual historical attendance. One available visit is deducted only after confirmation.':
@@ -73,9 +73,9 @@ const my: Record<string, string> = {
   'Original attendance was cancelled': 'မူလတက်ရောက်မှုကို ပယ်ဖျက်ပြီးဖြစ်ပါသည်',
   'Duplicate requests do not deduct another visit.':
     'ထပ်တင်သော request များအတွက် တစ်ကြိမ် ထပ်မလျှော့ပါ။',
-  'Find sessions': 'တွေ့ဆုံပွဲ ရှာမည်',
-  'More sessions': 'နောက်ထပ် တွေ့ဆုံပွဲများ',
-  'No sessions found for this date. Adjust the date or search.':
+  'Find events': 'တွေ့ဆုံပွဲ ရှာမည်',
+  'More events': 'နောက်ထပ် တွေ့ဆုံပွဲများ',
+  'No events found for this date. Adjust the date or search.':
     'ဤရက်တွင် တွေ့ဆုံပွဲ မတွေ့ပါ။ ရက် သို့မဟုတ် ရှာဖွေမှုကို ပြင်ပါ။',
   'Search accounts': 'အကောင့် ရှာရန်',
   'Find accounts': 'အကောင့် ရှာမည်',
@@ -83,13 +83,13 @@ const my: Record<string, string> = {
   'Choose an account': 'အကောင့် ရွေးပါ',
   'No accounts match this search.': 'ရှာဖွေမှုနှင့် ကိုက်ညီသော အကောင့် မရှိပါ။',
   'Attendance time (Myanmar)': 'တက်ရောက်ချိန် (မြန်မာစံတော်ချိန်)',
-  'Eligibility uses the selected historical date and current remaining visits. Closed sessions are allowed.':
+  'Eligibility uses the selected historical date and current remaining visits. Closed events are allowed.':
     'အကျုံးဝင်မှုကို ရွေးထားသော အရင်ရက်နှင့် လက်ရှိလက်ကျန်ဖြင့် စစ်ပါမည်။ ပိတ်ထားသောပွဲကိုလည်း ဖြည့်နိုင်ပါသည်။',
   'Result not confirmed. Retry the same backfill to avoid recording it twice.':
     'ရလဒ် မအတည်ပြုနိုင်သေးပါ။ နှစ်ကြိမ်မဖြစ်စေရန် ဤဖြည့်သွင်းမှုကိုသာ ပြန်စမ်းပါ။',
   'Retry same backfill': 'ဤဖြည့်သွင်းမှုကို ပြန်စမ်းမည်',
   'Save backfill': 'နောက်ကြောင်းပြန်ဖြည့်မည်',
-  'Backfill requires a historical session and matching attendance date in Myanmar time.':
+  'Backfill requires a historical event and matching attendance date in Myanmar time.':
     'အရင်ရက် တွေ့ဆုံပွဲနှင့် မြန်မာစံတော်ချိန်အရ ကိုက်ညီသော တက်ရောက်ရက် လိုပါသည်။',
   'This request ID was already used for a different operation.':
     'ဤ request ID ကို အခြားလုပ်ဆောင်မှုအတွက် သုံးပြီးဖြစ်ပါသည်။',
@@ -98,19 +98,19 @@ const my: Record<string, string> = {
   Status: 'အခြေအနေ',
   'Records on this page': 'ဤစာမျက်နှာရှိ မှတ်တမ်းများ',
 
-  'Meetup dates use Myanmar time. Live check-ins require an open session on its meetup date.':
+  'Meetup dates use Myanmar time. Live check-ins require an open event on its meetup date.':
     'တွေ့ဆုံရက်များသည် မြန်မာစံတော်ချိန်ဖြစ်ပါသည်။ စကင်ဖတ်ရန် တွေ့ဆုံရက် ဖြစ်ရမည်ဖြစ်ပြီး ပွဲဖွင့်ထားရပါမည်။',
   'Closing prevents new check-ins. Existing records are retained.':
     'ပိတ်ထားပါက တက်ရောက်မှုအသစ် မမှတ်တမ်းတင်နိုင်ပါ။ ရှိပြီးမှတ်တမ်းများ ဆက်ရှိပါမည်။',
   'Opening does not record attendance. Live scanning is restricted to the meetup date.':
     'ပွဲဖွင့်ရုံဖြင့် တက်ရောက်မှု မမှတ်တမ်းတင်ပါ။ တွေ့ဆုံရက်တွင်သာ စကင်ဖတ်နိုင်ပါသည်။',
-  'Choose an assigned session in the QR scanner to record attendance.':
+  'Choose an event in the QR scanner to record attendance.':
     'တက်ရောက်မှုမှတ်တမ်းတင်ရန် QR စကင်နာတွင် တာဝန်ပေးထားသော တွေ့ဆုံပွဲကို ရွေးပါ။',
 
   'Attendance history': 'တက်ရောက်မှု မှတ်တမ်း',
   'Review check-ins and retained corrections. Dates use Myanmar time.':
     'တက်ရောက်မှုနှင့် ပြင်ဆင်မှုမှတ်တမ်းများကို ကြည့်ပါ။ ရက်စွဲများသည် မြန်မာစံတော်ချိန် ဖြစ်ပါသည်။',
-  'Name, member number, plan or session':
+  'Name, member number, program or event':
     'အမည်၊ အသင်းဝင်နံပါတ်၊ အစီအစဉ် သို့မဟုတ် တွေ့ဆုံပွဲ',
   Method: 'မှတ်တမ်းတင်နည်း',
   'All methods': 'နည်းလမ်းအားလုံး',
@@ -121,7 +121,7 @@ const my: Record<string, string> = {
   'Clear filters': 'စစ်ထုတ်မှု ရှင်းမည်',
   'No attendance matches these filters.':
     'ဤစစ်ထုတ်မှုနှင့် ကိုက်ညီသော တက်ရောက်မှု မရှိပါ။',
-  'Plan / session': 'အစီအစဉ် / တွေ့ဆုံပွဲ',
+  'Program / event': 'အစီအစဉ် / တွေ့ဆုံပွဲ',
   'Attendance time': 'တက်ရောက်ချိန်',
   'Recorded by': 'မှတ်တမ်းတင်သူ',
   Cancellation: 'ပယ်ဖျက်မှု',
@@ -140,21 +140,21 @@ const my: Record<string, string> = {
     'ကင်မရာ အသုံးပြုခွင့် မရပါ။ ခွင့်ပြုပါ သို့မဟုတ် QR ပုံကို ရွေးပါ။',
   'Result not confirmed. Retry this same scan after reconnecting; do not create a new request.':
     'ရလဒ်ကို အတည်မပြုနိုင်သေးပါ။ အင်တာနက် ပြန်ရပါက ဤ scan ကိုသာ ပြန်စစ်ပါ။',
-  'Verify the person matches the member name and number. Live scanning is limited to the session meetup date.':
+  'Verify the person matches the member name and number. Live scanning is limited to the event meetup date.':
     'Member အမည်နှင့် နံပါတ်ကို လူနှင့် တိုက်စစ်ပါ။ တွေ့ဆုံမည့်ရက်တွင်သာ တိုက်ရိုက် စကင်ဖတ်နိုင်ပါသည်။',
-  'Showing up to 100 open sessions for today in Myanmar time. Search to narrow the list.':
+  'Showing up to 100 open events for today in Myanmar time. Search to narrow the list.':
     'မြန်မာစံတော်ချိန် ယနေ့အတွက် ဖွင့်ထားသည့် တွေ့ဆုံပွဲ ၁၀၀ အထိ ပြထားပါသည်။ ရှာဖွေ၍ ရွေးနိုင်ပါသည်။',
-  'No open sessions for today. Ask Admin to create, open or assign a session.':
+  'No open events for today. Ask Admin to create, open or assign an event.':
     'ယနေ့အတွက် ဖွင့်ထားသော တွေ့ဆုံပွဲ မရှိပါ။ Admin ကို ဆက်သွယ်ပါ။',
-  'This session is no longer available to you.':
+  'This event is no longer available to you.':
     'ဤတွေ့ဆုံပွဲကို သင် ဝင်ခွင့်မရှိတော့ပါ။',
   'No visits remain for this membership.':
     'ဤ membership တွင် တက်ရောက်ခွင့် မကျန်တော့ပါ။',
-  'No eligible membership for this session.':
+  'No eligible membership for this event.':
     'ဤတွေ့ဆုံပွဲအတွက် အသုံးပြုနိုင်သော membership မရှိပါ။',
   'Live check-in is only available on the meetup date.':
     'တွေ့ဆုံမည့်ရက်တွင်သာ တိုက်ရိုက် စကင်ဖတ်နိုင်ပါသည်။',
-  'This session is closed.': 'ဤတွေ့ဆုံပွဲကို ပိတ်ထားပါသည်။',
+  'This event is closed.': 'ဤတွေ့ဆုံပွဲကို ပိတ်ထားပါသည်။',
   'This account cannot check in.':
     'ဤ account ဖြင့် တက်ရောက်မှု မမှတ်တမ်းတင်နိုင်ပါ။',
   'This QR is invalid or has been replaced.':
@@ -188,11 +188,11 @@ const my: Record<string, string> = {
   'Waiting for camera permission…': 'ကင်မရာ ခွင့်ပြုချက်ကို စောင့်နေသည်…',
   'Camera is off': 'ကင်မရာ ပိတ်ထားသည်',
   'Camera preview': 'ကင်မရာ မြင်ကွင်း',
-  'Refresh sessions': 'တွေ့ဆုံပွဲများ ပြန်ယူမည်',
-  'Select a session': 'တွေ့ဆုံပွဲ ရွေးပါ',
-  'Loading sessions…': 'တွေ့ဆုံပွဲများ ရယူနေသည်…',
-  Session: 'တွေ့ဆုံပွဲ',
-  'Find a session': 'တွေ့ဆုံပွဲ ရှာရန်',
+  'Refresh events': 'တွေ့ဆုံပွဲများ ပြန်ယူမည်',
+  'Select a event': 'တွေ့ဆုံပွဲ ရွေးပါ',
+  'Loading events…': 'တွေ့ဆုံပွဲများ ရယူနေသည်…',
+  Event: 'တွေ့ဆုံပွဲ',
+  'Find a event': 'တွေ့ဆုံပွဲ ရှာရန်',
   'Select a meetup, then scan a member QR to record attendance.':
     'တွေ့ဆုံပွဲ ရွေးပြီး Member QR ကို ဖတ်၍ တက်ရောက်မှု မှတ်တမ်းတင်ပါ။',
   'The request timed out. Check whether your change was saved before trying again.':
@@ -207,7 +207,7 @@ const my: Record<string, string> = {
   'Signing out…': 'ထွက်နေသည်…',
   'Signing in…': 'ဝင်နေသည်…',
   'Saving…': 'သိမ်းနေသည်…',
-  'Loading staff…': 'ဝန်ထမ်းများ ရယူနေသည်…',
+  'Loading admin…': 'ဝန်ထမ်းများ ရယူနေသည်…',
   'Loading…': 'ရယူနေသည်…',
   'Enter your name, a valid Myanmar phone number and a password of 8–128 characters.':
     'နာမည်၊ မှန်ကန်သည့် မြန်မာဖုန်းနံပါတ်နှင့် စာလုံးရေ ၈ မှ ၁၂၈ အထိ password ထည့်ပါ။',
@@ -215,13 +215,13 @@ const my: Record<string, string> = {
     'Account ဖွင့်၍ မရပါ။ အချက်အလက်များ ပြန်စစ်ပါ။ Account ရှိပြီးသားဆိုပါက Member app ကို သုံးပါ သို့မဟုတ် MOE ကို ဆက်သွယ်ပါ။',
   'Members can create an account here or use the MOE member app.':
     'Member များ ဤနေရာတွင် account ဖွင့်နိုင်ပြီး MOE member app ကိုလည်း သုံးနိုင်ပါသည်။',
-  'Use the MOE member app to view your QR and membership. Admin will assign your plan separately.':
-    'QR နှင့် membership ကြည့်ရန် MOE member app ကို အသုံးပြုပါ။ Admin က သင့် Plan ကို သီးခြားသတ်မှတ်ပေးပါမည်။',
+  'Use the MOE member app to view your QR and membership. Admin will assign your program separately.':
+    'QR နှင့် membership ကြည့်ရန် MOE member app ကို အသုံးပြုပါ။ Admin က သင့် Program ကို သီးခြားသတ်မှတ်ပေးပါမည်။',
   'Your member account has been created. Use the member app to view your QR and membership.':
     'Member account ဖွင့်ပြီးပါပြီ။ QR နှင့် membership ကြည့်ရန် Member app ကို အသုံးပြုပါ။',
   'Member account ready': 'Member account အဆင်သင့်ဖြစ်ပါပြီ',
-  'Creating an account does not assign a membership. Admin will assign your plan separately.':
-    'Account ဖွင့်ရုံဖြင့် membership မရသေးပါ။ Admin က သင့် Plan ကို သီးခြားသတ်မှတ်ပေးပါမည်။',
+  'Creating an account does not assign a membership. Admin will assign your program separately.':
+    'Account ဖွင့်ရုံဖြင့် membership မရသေးပါ။ Admin က သင့် Program ကို သီးခြားသတ်မှတ်ပေးပါမည်။',
   'Enter your full name.': 'သင့်အမည်အပြည့်အစုံကို ထည့်ပါ။',
   'Use 8–128 characters.': 'စာလုံးရေ ၈ မှ ၁၂၈ အထိ သုံးပါ။',
   'Confirm password': 'Password အတည်ပြုရန်',
@@ -238,18 +238,18 @@ const my: Record<string, string> = {
     'Member များသည် MOE member app တွင် Login နှင့် Sign up လုပ်နိုင်ပါသည်။',
   'Sign in or sign up through the MOE mobile app or member website provided by your team.':
     'MOE mobile app သို့မဟုတ် သင့်အဖွဲ့မှ ပေးထားသော Member website တွင် Login သို့မဟုတ် Sign up လုပ်ပါ။',
-  'This console is for administrators and staff. Your account is a member account.':
-    'ဤ console သည် Admin နှင့် Staff အတွက် ဖြစ်ပါသည်။ သင့် account သည် Member account ဖြစ်ပါသည်။',
+  'This console is for administrators and admin. Your account is a member account.':
+    'ဤ console သည် Admin နှင့် Admin အတွက် ဖြစ်ပါသည်။ သင့် account သည် Member account ဖြစ်ပါသည်။',
   'Use the member app': 'Member app ကို အသုံးပြုပါ',
   'The previous QR will stop working. Memberships, visits and login sessions remain unchanged.':
     'QR အဟောင်းကို အသုံးပြု၍ မရတော့ပါ။ အသင်းဝင်မှု၊ လက်ကျန်အကြိမ်ရေနှင့် login session များ မပြောင်းလဲပါ။',
-  'Showing this QR does not confirm attendance. Staff will check your eligibility when scanning is available.':
+  'Showing this QR does not confirm attendance. Admin will check your eligibility when scanning is available.':
     'ဤ QR ပြထားရုံဖြင့် တက်ရောက်မှု မမှတ်တမ်းတင်ပါ။ စကင်ဖတ်ခြင်း ရရှိချိန်တွင် ဝန်ထမ်းက သင့်ဝင်ခွင့်ကို စစ်ဆေးပါမည်။',
   'If Admin replaces your QR, refresh this page. Your previous QR will no longer work.':
     'Admin က QR အသစ်ပြန်ထုတ်ပါက ဤစာမျက်နှာကို ပြန်ဖွင့်ပါ။ QR အဟောင်းကို အသုံးပြု၍ မရတော့ပါ။',
   'Available even without an assigned membership.':
     'အသင်းဝင်မှု မသတ်မှတ်ရသေးလည်း QR ရရှိပါသည်။',
-  'Your account has one personal QR across all plans.':
+  'Your account has one personal QR across all programs.':
     'အစီအစဉ်အားလုံးအတွက် ကိုယ်ပိုင် QR တစ်ခုတည်းကို အသုံးပြုပါသည်။',
   'Recent QR changes': 'လတ်တလော QR ပြောင်းလဲမှုများ',
   'QR version': 'QR ဗားရှင်း',
@@ -258,47 +258,47 @@ const my: Record<string, string> = {
   'Personal QR': 'ကိုယ်ပိုင် QR',
   'Meetup dates use Myanmar time. QR scanning and attendance recording are coming next.':
     'တွေ့ဆုံမည့်ရက်ကို မြန်မာစံတော်ချိန်ဖြင့် သတ်မှတ်ပါသည်။ QR စကင်ဖတ်ခြင်းနှင့် တက်ရောက်မှုမှတ်တမ်းကို နောက်အဆင့်တွင် ထည့်ပါမည်။',
-  'Ask your administrator to assign you to a session.':
+  'Ask your administrator to assign you to an event.':
     'တွေ့ဆုံပွဲတာဝန်ပေးရန် Admin ကို ဆက်သွယ်ပါ။',
-  'Organise meetups and manage staff access.':
+  'Organise meetups and manage admin access.':
     'တွေ့ဆုံပွဲများနှင့် ဝန်ထမ်းဝင်ခွင့်ကို စီမံပါ။',
-  'Only sessions currently assigned to you are shown.':
+  'Only events currently assigned to you are shown.':
     'သင့်ကို တာဝန်ပေးထားသည့် တွေ့ဆုံပွဲများကိုသာ ပြထားပါသည်။',
-  'No current staff access': 'လက်ရှိ ဝန်ထမ်းအဖြစ် ဝင်ခွင့်မရှိ',
-  'Load more staff': 'နောက်ထပ် ဝန်ထမ်းများကြည့်ရန်',
-  'No enabled staff found': 'အသုံးပြုနိုင်သော ဝန်ထမ်း မတွေ့ပါ',
-  'No staff assigned': 'ဝန်ထမ်း မသတ်မှတ်ရသေး',
+  'No current admin access': 'လက်ရှိ ဝန်ထမ်းအဖြစ် ဝင်ခွင့်မရှိ',
+  'Load more admin': 'နောက်ထပ် ဝန်ထမ်းများကြည့်ရန်',
+  'No enabled admin found': 'အသုံးပြုနိုင်သော ဝန်ထမ်း မတွေ့ပါ',
+  'No admin assigned': 'ဝန်ထမ်း မသတ်မှတ်ရသေး',
   'Clear dates': 'ရက်စွဲများ ဖျက်မည်',
   'To date': 'ပြီးဆုံးရက်အထိ',
   'From date': 'စတင်ရက်မှ',
-  'No sessions found': 'တွေ့ဆုံပွဲ မတွေ့ပါ',
-  'All sessions': 'တွေ့ဆုံပွဲအားလုံး',
-  'Session or plan name': 'တွေ့ဆုံပွဲ သို့မဟုတ် အစီအစဉ်အမည်',
-  'Search sessions': 'တွေ့ဆုံပွဲ ရှာရန်',
-  'Clear staff': 'ဝန်ထမ်းအားလုံး ဖယ်မည်',
-  'Save staff': 'ဝန်ထမ်းသတ်မှတ်မှု သိမ်းမည်',
-  'Find staff': 'ဝန်ထမ်းရှာရန်',
-  'Assigned staff': 'တာဝန်ပေးထားသော ဝန်ထမ်းများ',
-  'Manage staff': 'ဝန်ထမ်း သတ်မှတ်မည်',
-  'Close session': 'တွေ့ဆုံပွဲ ပိတ်မည်',
-  'Open session': 'တွေ့ဆုံပွဲ ဖွင့်မည်',
+  'No events found': 'တွေ့ဆုံပွဲ မတွေ့ပါ',
+  'All events': 'တွေ့ဆုံပွဲအားလုံး',
+  'Event or program name': 'တွေ့ဆုံပွဲ သို့မဟုတ် အစီအစဉ်အမည်',
+  'Search events': 'တွေ့ဆုံပွဲ ရှာရန်',
+  'Clear admin': 'ဝန်ထမ်းအားလုံး ဖယ်မည်',
+  'Save admin': 'ဝန်ထမ်းသတ်မှတ်မှု သိမ်းမည်',
+  'Find admin': 'ဝန်ထမ်းရှာရန်',
+  'Assigned admin': 'တာဝန်ပေးထားသော ဝန်ထမ်းများ',
+  'Manage admin': 'ဝန်ထမ်း သတ်မှတ်မည်',
+  'Close event': 'တွေ့ဆုံပွဲ ပိတ်မည်',
+  'Open event': 'တွေ့ဆုံပွဲ ဖွင့်မည်',
   Closed: 'ပိတ်ထား',
   Open: 'ဖွင့်ထား',
-  'Session state': 'တွေ့ဆုံပွဲ အခြေအနေ',
+  'Event state': 'တွေ့ဆုံပွဲ အခြေအနေ',
   'Meetup date': 'တွေ့ဆုံမည့်ရက်',
-  'Session name': 'တွေ့ဆုံပွဲအမည်',
-  'Create session': 'တွေ့ဆုံပွဲ ဖန်တီးမည်',
+  'Event name': 'တွေ့ဆုံပွဲအမည်',
+  'Create event': 'တွေ့ဆုံပွဲ ဖန်တီးမည်',
   used: 'အသုံးပြုပြီး',
-  Plan: 'အစီအစဉ်',
+  Program: 'အစီအစဉ်',
   Visits: 'အကြိမ်ရေ',
   Period: 'ကာလ',
-  'Find a plan': 'အစီအစဉ်ရှာရန်',
+  'Find a program': 'အစီအစဉ်ရှာရန်',
   'Find an account': 'အကောင့်ရှာရန်',
   'Search memberships': 'အသင်းဝင်မှုရှာရန်',
-  'Search plans': 'အစီအစဉ်ရှာရန်',
+  'Search programs': 'အစီအစဉ်ရှာရန်',
   'Change history': 'ပြောင်းလဲမှုမှတ်တမ်း',
-  'All plans': 'အစီအစဉ်အားလုံး',
-  'Save plan': 'အစီအစဉ်သိမ်းမည်',
+  'All programs': 'အစီအစဉ်အားလုံး',
+  'Save program': 'အစီအစဉ်သိမ်းမည်',
   Archived: 'သိမ်းဆည်းထား',
   Available: 'အသုံးပြုနိုင်',
   Cancelled: 'ပယ်ဖျက်ပြီး',
@@ -311,17 +311,17 @@ const my: Record<string, string> = {
   'Total visits': 'တက်ရောက်ခွင့် စုစုပေါင်း',
   Benefits: 'ခံစားခွင့်များ',
   Description: 'ဖော်ပြချက်',
-  'Plan name': 'အစီအစဉ်အမည်',
+  'Program name': 'အစီအစဉ်အမည်',
   'Cancel membership': 'အသင်းဝင်မှု ပယ်ဖျက်မည်',
   'Renew membership': 'အသင်းဝင်မှု သက်တမ်းတိုးမည်',
   'Edit membership': 'အသင်းဝင်မှု ပြင်မည်',
-  'Assign membership': 'အသင်းဝင်မှု သတ်မှတ်မည်',
-  'Create plan': 'အစီအစဉ်ဖန်တီးမည်',
+  Purchase: 'အသင်းဝင်မှု သတ်မှတ်မည်',
+  'Create program': 'အစီအစဉ်ဖန်တီးမည်',
   Overview: 'ခြုံငုံသုံးသပ်ချက်',
-  'Users & staff': 'အသုံးပြုသူနှင့် ဝန်ထမ်းများ',
-  Plans: 'အစီအစဉ်များ',
+  'Users & admins': 'အသုံးပြုသူနှင့် ဝန်ထမ်းများ',
+  Programs: 'အစီအစဉ်များ',
   Memberships: 'အသင်းဝင်မှုများ',
-  'Meetup sessions': 'တွေ့ဆုံပွဲများ',
+  'Meetup events': 'တွေ့ဆုံပွဲများ',
   'QR scanner': 'QR စကင်နာ',
   Attendance: 'တက်ရောက်မှု',
   'Reports & export': 'အစီရင်ခံစာများ',
@@ -329,12 +329,12 @@ const my: Record<string, string> = {
   Settings: 'ဆက်တင်များ',
   'Sign out': 'ထွက်မည်',
   'Sign in': 'အကောင့်ဝင်မည်',
-  'Members, administrators and staff can sign in here.':
+  'Members, administrators and admin can sign in here.':
     'အသင်းဝင်များ၊ စီမံခန့်ခွဲသူများနှင့် ဝန်ထမ်းများ ဤနေရာမှ အကောင့်ဝင်နိုင်ပါသည်။',
   'New to MOE? Create a member account to get started.':
     'MOE တွင် အကောင့်မရှိသေးပါက အသင်းဝင်အကောင့် ဖွင့်နိုင်ပါသည်။',
   'Member sign in': 'အသင်းဝင် အကောင့်ဝင်ရန်',
-  'For MOE administrators and staff.':
+  'For MOE administrators and admin.':
     'MOE စီမံခန့်ခွဲသူနှင့် ဝန်ထမ်းများအတွက်။',
   'Use the sign-in page for your account.':
     'သင့်အကောင့်အတွက် သက်ဆိုင်ရာ ဝင်ရောက်ရန်စာမျက်နှာကို သုံးပါ။',
@@ -362,13 +362,18 @@ const my: Record<string, string> = {
     'အမည်၊ အီးမေးလ် သို့မဟုတ် ဖုန်းနံပါတ်ဖြင့် ရှာရန်',
   'Try a different name, email or phone number.':
     'အခြား အမည်၊ အီးမေးလ် သို့မဟုတ် ဖုန်းနံပါတ်ဖြင့် ရှာကြည့်ပါ။',
-  'Create a member or staff account.':
+  'Create a member or admin account.':
     'အသင်းဝင် သို့မဟုတ် ဝန်ထမ်း အကောင့်ဖွင့်ပါ။',
   'Console sign in': 'စီမံခန့်ခွဲရန် ဝင်မည်',
   'Phone number': 'ဖုန်းနံပါတ်',
   Password: 'စကားဝှက်',
+  'Current end date': 'လက်ရှိ သက်တမ်းကုန်ရက်',
+  'Choose a later date to extend this membership. Visits do not increase automatically.':
+    'သက်တမ်းတိုးရန် နောက်ကျသည့်ရက်ကို ရွေးပါ။ တက်ရောက်ခွင့်အကြိမ်ရေ အလိုအလျောက် မတိုးပါ။',
+  'Set the total visits for this member.':
+    'ဤအသင်းဝင်အတွက် တက်ရောက်ခွင့်အကြိမ်ရေ သတ်မှတ်ပါ။',
   'Admin console': 'စီမံခန့်ခွဲမှု',
-  'Staff console': 'ဝန်ထမ်းလုပ်ငန်းခွင်',
+  'Super Admin console': 'အဓိက စီမံခန့်ခွဲမှု',
   'Member account': 'အသင်းဝင်အကောင့်',
   'Welcome back': 'ပြန်လည်ကြိုဆိုပါသည်',
   'Create account': 'အကောင့်ဖန်တီးမည်',
@@ -378,7 +383,7 @@ const my: Record<string, string> = {
   Enabled: 'အသုံးပြုခွင့်ရှိ',
   Disabled: 'အသုံးပြုခွင့်ပိတ်',
   Admin: 'စီမံခန့်ခွဲသူ',
-  Staff: 'ဝန်ထမ်း',
+  'Super Admin': 'အဓိက စီမံခန့်ခွဲသူ',
   Member: 'အသင်းဝင်',
   Name: 'အမည်',
   Role: 'အခန်းကဏ္ဍ',
@@ -412,7 +417,7 @@ const my: Record<string, string> = {
   'Change your temporary password': 'ယာယီစကားဝှက်ကို ပြောင်းပါ',
   'Total accounts': 'အကောင့်စုစုပေါင်း',
   'Enabled accounts': 'အသုံးပြုခွင့်ရှိသော အကောင့်များ',
-  'Staff accounts': 'ဝန်ထမ်းအကောင့်များ',
+  'Admin accounts': 'ဝန်ထမ်းအကောင့်များ',
   'Password changes required': 'စကားဝှက်ပြောင်းရန် လိုအပ်သူများ',
   'Account directory': 'အကောင့်စာရင်း',
   'View all accounts': 'အကောင့်အားလုံး ကြည့်မည်',
@@ -457,10 +462,9 @@ Object.assign(my, {
     'ဖုန်းနံပါတ် သို့မဟုတ် စကားဝှက် မှားနေပါသည်။',
   'Current password is incorrect, or your session expired.':
     'လက်ရှိစကားဝှက် မှားနေခြင်း သို့မဟုတ် ဝင်ထားမှုသက်တမ်း ကုန်နေခြင်း ဖြစ်နိုင်ပါသည်။',
-  'Plans & memberships': 'အစီအစဉ်နှင့် အသင်းဝင်မှုများ',
+  'Programs & memberships': 'အစီအစဉ်နှင့် အသင်းဝင်မှုများ',
   'Attendance reports': 'တက်ရောက်မှု အစီရင်ခံစာ',
-  'Members, staff and administrators':
-    'အသင်းဝင်၊ ဝန်ထမ်းနှင့် စီမံခန့်ခွဲသူများ',
+  'Members and administrators': 'အသင်းဝင်၊ ဝန်ထမ်းနှင့် စီမံခန့်ခွဲသူများ',
   'Keep your workspace up to date': 'လိုအပ်သော ပြင်ဆင်မှုများ လုပ်ဆောင်ပါ',
   'Create accounts and manage access': 'အကောင့်ဖန်တီးပြီး အသုံးပြုခွင့် စီမံပါ',
   'Update your password': 'စကားဝှက်ပြောင်းပါ',

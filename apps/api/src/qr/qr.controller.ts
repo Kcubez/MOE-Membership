@@ -16,7 +16,7 @@ import {
   SessionGuard,
   type AuthenticatedRequest,
 } from '../auth/session.guard.js';
-import { AdminGuard } from '../auth/roles.guard.js';
+import { AdminGuard, SuperAdminGuard } from '../auth/roles.guard.js';
 import { DomainExceptionFilter } from '../common/domain/errors.js';
 import { parse, version, reason } from '../common/domain/rules.js';
 import { QrService } from './qr.service.js';
@@ -55,9 +55,10 @@ export class AdminQrController {
       parse(z.object({ version, reason }).strict(), body),
     );
   }
-  @Get('audit') @Header('Cache-Control', 'private, no-store') history(
-    @Param('id') id: string,
-  ) {
+  @UseGuards(SuperAdminGuard)
+  @Get('audit')
+  @Header('Cache-Control', 'private, no-store')
+  history(@Param('id') id: string) {
     return this.service.history(id);
   }
 }

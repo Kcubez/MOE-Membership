@@ -11,7 +11,8 @@ import { retryable } from './transaction.js';
 export class CancellationService {
   constructor(@Inject(PrismaService) private readonly db: PrismaService) {}
   async cancel(actor: Actor, id: string, reason: string) {
-    if (actor.role !== 'admin') throw new ForbiddenException();
+    if (!['super_admin', 'admin'].includes(actor.role))
+      throw new ForbiddenException();
     for (let attempt = 0; ; attempt++) {
       try {
         return await this.db.client.$transaction(

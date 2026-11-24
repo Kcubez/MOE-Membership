@@ -156,7 +156,12 @@ test(
       await api
         .post('/api/v1/auth/signup')
         .set('X-MOE-Client', 'mobile')
-        .send({ name: 'Bad', phone: '09791234567', password, role: 'admin' })
+        .send({
+          name: 'Bad',
+          phone: '09791234567',
+          password,
+          role: 'super_admin',
+        })
         .expect(400);
       await api
         .post('/api/v1/auth/login')
@@ -231,7 +236,7 @@ test(
         assert.deepEqual(
           JSON.parse(replies[0] as string).reply_markup.keyboard,
           [
-            ['📱 Show my QR code', '📋 My plan'],
+            ['📱 Show my QR code', '📋 My program'],
             ['📅 Attendance history', '🚪 Logout'],
           ],
         );
@@ -265,8 +270,8 @@ test(
         assert.equal(qrReply.get('chat_id'), '123');
         assert.equal(qrReply.get('protect_content'), 'true');
         assert.equal((qrReply.get('photo') as File).type, 'image/png');
-        await webhook('📋 My plan').expect(200);
-        assert.match(replies.at(-1) as string, /no active plans/);
+        await webhook('📋 My program').expect(200);
+        assert.match(replies.at(-1) as string, /no active programs/);
         await webhook('Attendance history').expect(200);
         assert.match(replies.at(-1) as string, /No attendance/);
         // Same identity is idempotent; a different Telegram requires consent.
@@ -490,7 +495,7 @@ test(
       }).expect(400);
       await write('post', '/api/v1/admin/users', admin.body.token, {
         ...account,
-        role: 'admin',
+        role: 'super_admin',
       }).expect(400);
       const staffEmail = 'moe.staff@gmail.com';
       const staffPassword = 'temporary-staff-123';
@@ -502,7 +507,7 @@ test(
           name: 'Email Staff',
           email: ' MOE.Staff@gmail.com ',
           temporaryPassword: staffPassword,
-          role: 'staff',
+          role: 'admin',
         },
       ).expect(200);
       assert.equal(emailStaff.body.user.email, staffEmail);
@@ -512,11 +517,11 @@ test(
         .set('X-MOE-Client', 'mobile')
         .send({ email: staffEmail, password: staffPassword })
         .expect(200);
-      assert.equal(staffLogin.body.user.role, 'staff');
+      assert.equal(staffLogin.body.user.role, 'admin');
       assert.equal(staffLogin.body.user.mustChangePassword, true);
       await write('post', '/api/v1/admin/users', admin.body.token, {
         ...account,
-        role: 'staff',
+        role: 'admin',
       }).expect(400);
       const member = await login(account.phone, account.temporaryPassword);
       assert.equal(member.status, 200);
@@ -597,25 +602,25 @@ test(
         'patch',
         `/api/v1/admin/users/${id}/access`,
         admin.body.token,
-        { enabled: true, role: 'staff', reason: 'Assign staff role' },
+        { enabled: true, role: 'admin', reason: 'Assign staff role' },
       ).expect(409);
       await write('post', '/api/v1/account/password', staffLogin.body.token, {
         currentPassword: staffPassword,
         newPassword: 'permanent-staff-456',
       }).expect(200);
       const staff = await login(staffEmail, 'permanent-staff-456');
-      assert.equal(staff.body.user.role, 'staff');
+      assert.equal(staff.body.user.role, 'admin');
       await write(
         'post',
         '/api/v1/admin/users',
         staff.body.token,
         account,
-      ).expect(403);
+      ).expect(200);
       await write(
         'patch',
         `/api/v1/admin/users/${emailStaff.body.user.id}/access`,
         admin.body.token,
-        { enabled: false, role: 'staff', reason: 'Deactivate test staff' },
+        { enabled: false, role: 'admin', reason: 'Deactivate test staff' },
       ).expect(200);
       await api
         .get('/api/v1/members/me')

@@ -20,7 +20,7 @@
       "value": "http://localhost:4000"
     },
     {
-      "key": "adminPhone",
+      "key": "adminEmail",
       "value": ""
     },
     {
@@ -70,7 +70,7 @@
         "url": "{{baseUrl}}/api/v1/auth/login",
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"phone\": \"{{adminPhone}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+          "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -95,7 +95,7 @@
       ]
     },
     {
-      "name": "Create meetup \u2014 choose plan, staff and date first",
+      "name": "Create meetup — choose program, staff and date first",
       "request": {
         "method": "POST",
         "header": [

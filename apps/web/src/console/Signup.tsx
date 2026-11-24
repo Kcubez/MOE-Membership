@@ -118,7 +118,7 @@ export function Signup({
       </form>
       <p className="c-auth-note">
         {t(
-          'Creating an account does not assign a membership. Admin will assign your plan separately.',
+          'Creating an account does not assign a membership. Admin will assign your program separately.',
         )}
       </p>
       <a className="c-member-link" href="/login">

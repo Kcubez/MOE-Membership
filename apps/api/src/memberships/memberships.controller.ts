@@ -18,7 +18,7 @@ import {
   SessionGuard,
   type AuthenticatedRequest,
 } from '../auth/session.guard.js';
-import { AdminGuard } from '../auth/roles.guard.js';
+import { AdminGuard, SuperAdminGuard } from '../auth/roles.guard.js';
 import { DomainExceptionFilter } from '../common/domain/errors.js';
 import {
   parse,
@@ -59,9 +59,10 @@ export class MembershipsController {
   ) {
     return this.service.get(id);
   }
-  @Get(':id/audit') @Header('Cache-Control', 'no-store') history(
-    @Param('id') id: string,
-  ) {
+  @Get(':id/audit')
+  @UseGuards(SuperAdminGuard)
+  @Header('Cache-Control', 'no-store')
+  history(@Param('id') id: string) {
     return this.service.history(id);
   }
   @Post() @HttpCode(200) assign(
@@ -72,7 +73,13 @@ export class MembershipsController {
       req.actor,
       parse(
         z
-          .object({ ...period, userId: id, planId: id, planVersion: version })
+          .object({
+            ...period,
+            totalVisits: visits,
+            userId: id,
+            planId: id,
+            planVersion: version,
+          })
           .strict(),
         body,
       ),
@@ -100,7 +107,12 @@ export class MembershipsController {
     return this.service.renew(
       req.actor,
       id,
-      parse(z.object({ ...period, planVersion: version }).strict(), body),
+      parse(
+        z
+          .object({ ...period, totalVisits: visits, planVersion: version })
+          .strict(),
+        body,
+      ),
     );
   }
   @Post(':id/cancel') @HttpCode(200) cancel(

@@ -78,7 +78,7 @@ export function CancelAttendance({
         <dd>
           {item.member.name} · {item.member.memberNumber}
         </dd>
-        <dt>{t('Plan / session')}</dt>
+        <dt>{t('Program / event')}</dt>
         <dd>
           {item.plan.name} · {item.session.name}
         </dd>

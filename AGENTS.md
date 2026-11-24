@@ -30,14 +30,14 @@
 
 ## Product Invariants
 
-- Phone/password identifies accounts. Telegram identity is not the membership owner.
+- Members use phone/password; Super Admin and Admin use email/password. Telegram identity is not the membership owner.
 - Normalize phone numbers before enforcing database uniqueness.
-- Plan templates have no dates/duration. Admin must explicitly enter each membership's start and end dates.
-- Snapshot membership visit quotas; never silently change existing memberships when editing a plan.
+- Programs have no quota or dates/duration. Purchase/renewal requires explicit per-membership visits, start and end dates.
+- Preserve membership visit quotas; never silently change memberships when editing a program.
 - Enforce non-overlap, nonnegative remaining visits, and one effective check-in per membership/session in PostgreSQL.
 - Attendance creation, cancellation, and quota accounting must be atomic and retry-safe.
 - Use Asia/Yangon calendar dates and inclusive membership end dates; store event timestamps with timezone support.
-- Disabled accounts and revoked sessions must lose access; staff must be assigned to the scanned session.
+- Disabled accounts and revoked sessions must lose access. Super Admin and Admin may operate all events; only Super Admin reads audit logs or reports/export.
 - Never log passwords, raw QR tokens, session credentials, or unmasked sensitive personal data.
 
 ## Changes and Attribution

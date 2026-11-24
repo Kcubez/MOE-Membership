@@ -62,7 +62,7 @@ export class AttendanceService {
     if (
       !user.enabled ||
       user.mustChangePassword ||
-      !['admin', 'staff'].includes(user.role)
+      !['super_admin', 'admin'].includes(user.role)
     )
       throw new ForbiddenException();
     return user;
@@ -79,7 +79,8 @@ export class AttendanceService {
     id: string,
     input: BackfillInput,
   ): Promise<CheckInResult> {
-    if (actor.role !== 'admin') throw new ForbiddenException();
+    if (!['super_admin', 'admin'].includes(actor.role))
+      throw new ForbiddenException();
     return this.record(
       actor,
       id,
@@ -93,7 +94,7 @@ export class AttendanceService {
     input: CheckInInput,
     backfill?: BackfillInput,
   ): Promise<CheckInResult> {
-    if (!['admin', 'staff'].includes(actor.role))
+    if (!['super_admin', 'admin'].includes(actor.role))
       throw new ForbiddenException();
     const fingerprint = createHash('sha256')
       .update(
@@ -118,9 +119,6 @@ export class AttendanceService {
             const visible = await tx.meetupSession.findFirst({
               where: {
                 id,
-                ...(actor.role === 'staff'
-                  ? { assignments: { some: { userId: actor.id } } }
-                  : {}),
               },
               select: { id: true },
             });
@@ -147,8 +145,6 @@ export class AttendanceService {
               reference = found;
             }
             const scanner = await this.actor(tx, actor, reference.userId);
-            if (backfill && scanner.role !== 'admin')
-              throw new ForbiddenException();
             if (!backfill) {
               await tx.$queryRaw`SELECT "userId" FROM member_qr WHERE "userId"=${reference.userId} FOR UPDATE`;
               const qr = await tx.memberQr.findUnique({
@@ -187,15 +183,6 @@ export class AttendanceService {
               include: { plan: { select: { id: true, name: true } } },
             });
             if (!meetup) throw new NotFoundException();
-            if (
-              scanner.role === 'staff' &&
-              !(await tx.meetupStaff.findUnique({
-                where: {
-                  sessionId_userId: { sessionId: id, userId: actor.id },
-                },
-              }))
-            )
-              throw new NotFoundException();
             const previous = await tx.checkInOperation.findUnique({
               where: {
                 actorId_requestId: {

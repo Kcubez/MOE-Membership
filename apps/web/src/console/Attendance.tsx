@@ -28,6 +28,14 @@ export function Attendance({
     [cursors, setCursors] = useState<(string | undefined)[]>([undefined]),
     [revision, setRevision] = useState(0);
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setFilters((current) => ({ ...current, search: draft.search.trim() }));
+      setPage(0);
+      setCursors([undefined]);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [draft.search]);
+  useEffect(() => {
     const c = new AbortController();
     setLoading(true);
     setError('');
@@ -114,7 +122,7 @@ export function Attendance({
             <input
               value={draft.search}
               maxLength={120}
-              placeholder={t('Name, member number, plan or session')}
+              placeholder={t('Name, member number, program or event')}
               onChange={(e) => setDraft({ ...draft, search: e.target.value })}
             />
           </label>
@@ -197,7 +205,7 @@ export function Attendance({
                   <tr>
                     {[
                       'Member',
-                      'Plan / session',
+                      'Program / event',
                       'Attendance time',
                       'Method',
                       'Status',

@@ -1,5 +1,11 @@
 # Flutter API quick start
 
+## November 24 contract update
+
+Current roles: `super_admin`, `admin`, `member`. Both console roles use email/password; members use phone/password. Previous Admin becomes Super Admin and previous Staff becomes Admin in the migration. Console sessions are revoked during migration. Admin can operate all meetup events, memberships, purchases and attendance; event assignments are optional metadata. Audit reads and future reports/export are Super Admin only.
+
+UI labels are Programs, Purchase and Meetup events; Memberships stays unchanged. Technical paths/keys (`plans`, `sessions`, `staffIds`, `staff`, `planId`) remain unchanged. Programs no longer return or accept `totalVisits`. Purchase (`POST /api/v1/admin/memberships`) and renewal (`POST /api/v1/admin/memberships/{id}/renew`) require a positive `totalVisits`, explicit dates and reason. Editing a membership can extend endDate using its current version, dates, quota and reason. The allowance is preserved unless explicitly changed. Coordinate these contract changes with Flutter before deploying.
+
 ## Addresses and scope
 
 Direct API base URL: `https://moe-membership-api.vercel.app/api/v1`.
@@ -7,7 +13,7 @@ After deploying this change, browser documentation is at `https://moe-membership
 
 The canonical contract is `postman/specs/openapi.json`. Postman collections live in `postman/collections`. Swagger is read-only; use Postman with isolated test data for writes. Never test destructive account or attendance changes on real members.
 
-Implemented: member phone/password and console email/password auth, own profile/QR/memberships/history, Admin account/plan/membership/session management, assigned Staff scanning, Admin backfill and cancellation. Reports/export and global audit browsing remain pending. Native Flutter integration and physical-device camera acceptance still need verification.
+Implemented: member phone/password and console email/password auth, own profile/QR/memberships/history, Admin account/plan/membership/session management, Admin and Super Admin scanning, Admin backfill and cancellation. Reports/export and global audit browsing remain pending. Native Flutter integration and physical-device camera acceptance still need verification.
 
 ## Native Android/iOS authentication
 
@@ -38,11 +44,11 @@ Membership status precedence is Cancelled, Completed, Expired, Upcoming, Active.
 
 History returns `{ "items": [], "nextCursor": null }` when empty. When nextCursor exists, pass it unchanged as cursor for the next page; limit is 1–100. Cancelled attendance remains visible and does not consume a visit. Refresh balances after corrections.
 
-## Staff scanner
+## Console scanner
 
 Staff sign in through `POST /auth/login` with `{ "email": "<staff email>", "password": "<password>", "portal": "console" }`. Admin uses the same payload. Follow the password replacement step above when `mustChangePassword` is true.
 
-Call `GET /sessions`; Staff receive only assigned sessions. Choose an open session whose meetup date is today in Asia/Yangon. Decode QR locally, then `POST /sessions/{id}/check-ins` with `{ "requestId": "<new UUID>", "qrPayload": "<scanned payload>" }` and the native auth headers above.
+Call `GET /sessions`; Admin and Super Admin receive all events. Choose an open session whose meetup date is today in Asia/Yangon. Decode QR locally, then `POST /sessions/{id}/check-ins` with `{ "requestId": "<new UUID>", "qrPayload": "<scanned payload>" }` and the native auth headers above.
 
 Pause decoding during requests. Show success only after the API confirms it. A timeout can occur after the server committed: retry with the exact same requestId, session and payload. Never generate a new ID for an uncertain retry. A fresh deliberate scan uses a new UUID. Duplicate attendance does not debit another visit. Do not queue offline scans; stop camera tracks on leaving/backgrounding the screen.
 
@@ -57,4 +63,4 @@ Pause decoding during requests. Show success only after the API confirms it. A t
 
 Responses may use `code`, or validation `message`/`statusCode`; consult each endpoint contract. Do not treat every failure as an expired session.
 
-Before handoff, prepare synthetic Member and assigned Staff accounts, a plan, a membership with available visits and a session for today's Yangon date in a dedicated staging database. Verify login, forced password replacement, profile/QR, pagination, successful/duplicate scan, quota exhaustion, revoked session and logout. Test accounts and secrets are supplied privately; none are embedded in this document.
+Before handoff, prepare synthetic Member and Admin accounts, a plan, a membership with available visits and a session for today's Yangon date in a dedicated staging database. Verify login, forced password replacement, profile/QR, pagination, successful/duplicate scan, quota exhaustion, revoked session and logout. Test accounts and secrets are supplied privately; none are embedded in this document.

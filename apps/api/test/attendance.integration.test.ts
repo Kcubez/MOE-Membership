@@ -67,11 +67,12 @@ test(
         b = await sign('Scan Test Staff B', '09791234574'),
         m = await sign('Scan Test Member', '09791234575'),
         outsider = await sign('Scan Unassigned Staff', '09791234576');
-      await pool.query("UPDATE moe_auth_user SET role='admin' WHERE id=$1", [
-        admin.body.user.id,
-      ]);
       await pool.query(
-        "UPDATE moe_auth_user SET role='staff' WHERE id=ANY($1::text[])",
+        "UPDATE moe_auth_user SET role='super_admin' WHERE id=$1",
+        [admin.body.user.id],
+      );
+      await pool.query(
+        "UPDATE moe_auth_user SET role='admin' WHERE id=ANY($1::text[])",
         [[a.body.user.id, b.body.user.id, outsider.body.user.id]],
       );
       const send = (
@@ -91,18 +92,19 @@ test(
           new Date(Date.parse(today + 'T12:00Z') + n * 86400000)
             .toISOString()
             .slice(0, 10);
-      const makePlan = async (visits: number) =>
-        (
+      const makePlan = async (visits: number) => ({
+        totalVisits: visits,
+        ...(
           await send('post', '/admin/plans', {
             name: 'Scanner plan ' + randomUUID(),
             description: '',
             benefits: '',
-            totalVisits: visits,
             reason: 'Scanner test setup',
           }).expect(200)
-        ).body;
+        ).body,
+      });
       const assign = async (
-        plan: { id: string; version: number },
+        plan: { id: string; version: number; totalVisits: number },
         start = today,
         end = today,
       ) =>
@@ -111,6 +113,7 @@ test(
             userId: m.body.user.id,
             planId: plan.id,
             planVersion: plan.version,
+            totalVisits: plan.totalVisits,
             startDate: start,
             endDate: end,
             reason: 'Scanner test assignment',
@@ -160,7 +163,9 @@ test(
         .send({ requestId: randomUUID(), qrPayload: payload })
         .expect(401);
       await scan(s1, m.body.token).expect(403);
-      await scan(s1, outsider.body.token).expect(404);
+      await scan(s1, outsider.body.token, randomUUID(), 'invalid-qr').expect(
+        409,
+      );
       await send(
         'post',
         '/sessions/' + s1.id + '/check-ins',
@@ -406,13 +411,13 @@ test(
         await send('put', '/admin/sessions/' + revokedSession.id + '/staff', {
           version: 1,
           staffIds: [],
-          reason: 'Revoke in-flight scanner assignment',
+          reason: 'Remove optional event assignment',
         }).expect(200);
       } finally {
         await held.query('ROLLBACK');
         held.release();
       }
-      assert.equal((await waiting).status, 404);
+      assert.equal((await waiting).status, 200);
       assert.equal(
         (
           await pool.query(
@@ -420,8 +425,11 @@ test(
             [waitingKey],
           )
         ).rows[0].n,
-        0,
+        1,
       );
+      await pool.query("UPDATE moe_auth_user SET role='admin' WHERE id=$1", [
+        a.body.user.id,
+      ]);
       {
         // API cancellation preserves the original record and refunds once, including concurrent retries.
         const cancelPlan = await makePlan(1),
@@ -447,7 +455,7 @@ test(
           .set('X-MOE-Client', 'mobile')
           .send({ reason: 'Test' })
           .expect(401);
-        await cancel(original.attendanceId, 'Test', a.body.token).expect(403);
+        await cancel(original.attendanceId, 'Test', m.body.token).expect(403);
         await cancel(original.attendanceId, 'Test', m.body.token).expect(403);
         await cancel('missing-attendance').expect(404);
         await cancel(original.attendanceId, ' ').expect(400);
@@ -650,7 +658,7 @@ test(
           .set('X-MOE-Client', 'mobile')
           .send({})
           .expect(401);
-        await backfill(historySession, randomUUID(), {}, a.body.token).expect(
+        await backfill(historySession, randomUUID(), {}, m.body.token).expect(
           403,
         );
         await backfill(historySession, randomUUID(), {}, m.body.token).expect(
@@ -835,7 +843,7 @@ test(
         // History is read-only, paginated and scoped by authenticated identity.
         await api.get('/api/v1/admin/attendance').expect(401);
         await get('/admin/attendance', m.body.token).expect(403);
-        await get('/admin/attendance', a.body.token).expect(403);
+        await get('/admin/attendance', a.body.token).expect(200);
         await get(
           '/members/me/attendance?userId=' + m.body.user.id,
           m.body.token,
@@ -874,7 +882,7 @@ test(
             200,
           )
         ).body;
-        assert.deepEqual(staffHistory.items, expected);
+        assert.deepEqual(staffHistory.items, full.items);
         const outside = full.items.find(
           (row: { session: { id: string } }) => !assigned.has(row.session.id),
         );
@@ -884,7 +892,13 @@ test(
             outsider.body.token,
           ).expect(200)
         ).body;
-        assert.deepEqual(staffFiltered.items, []);
+        assert.deepEqual(
+          staffFiltered.items,
+          full.items.filter(
+            (row: { session: { id: string } }) =>
+              row.session.id === outside.session.id,
+          ),
+        );
 
         assert.ok(
           full.items.some(

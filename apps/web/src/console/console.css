@@ -743,6 +743,8 @@
 }
 .c-row-actions {
   display: flex;
+  flex-wrap: wrap;
+  min-width: 200px;
   gap: 7px;
 }
 .c-you {
@@ -1654,6 +1656,7 @@ html[lang='my'] .c-table {
 }
 .c-plan-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   padding-top: 7px;
 }
@@ -1748,7 +1751,8 @@ html[lang='my'] .c-table {
 }
 .c-date-fields {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
   gap: 12px;
 }
 .c-date-fields > label,
@@ -2333,4 +2337,59 @@ html[lang='my'] .c-table {
   z-index: 100;
   width: min(28rem, calc(100vw - 2rem));
   box-shadow: 0 8px 28px rgb(15 23 42 / 14%);
+}
+
+.c-date-fields > label {
+  min-width: 0;
+  align-content: start;
+}
+.c-date-fields input[type='date'] {
+  min-width: 0;
+  height: 44px;
+}
+.c-membership-date-note {
+  line-height: 1.65;
+}
+
+/* Keep controls inside their panels at intermediate and narrow widths. */
+.c-filters {
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.c-page-heading > div,
+.c-dialog-heading h2 {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.c-dialog-actions {
+  flex-wrap: wrap;
+}
+@media (max-width: 680px) {
+  .console-ui .c-filters > .c-select {
+    min-width: 0;
+    flex: 1 1 95px;
+    max-width: none;
+  }
+  .c-dialog-actions > .c-button {
+    white-space: normal;
+  }
+}
+
+@media (max-width: 680px) {
+  .c-plan-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .c-plan-actions > button,
+  .c-plan-actions > button:last-child {
+    width: 100%;
+    margin-left: 0;
+    min-width: 0;
+    justify-content: center;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    height: auto;
+    min-height: 40px;
+  }
 }

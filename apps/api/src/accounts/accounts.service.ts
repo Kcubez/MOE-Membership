@@ -70,7 +70,9 @@ export class AccountsService {
       throw new UnauthorizedException();
     if (
       !user.enabled ||
-      (admin && (user.role !== 'admin' || user.mustChangePassword))
+      (admin &&
+        (!['super_admin', 'admin'].includes(user.role) ||
+          user.mustChangePassword))
     )
       throw new ForbiddenException();
     return user;
@@ -84,7 +86,7 @@ export class AccountsService {
       (result, group) => ({
         total: result.total + group._count._all,
         enabled: result.enabled + (group.enabled ? group._count._all : 0),
-        staff: result.staff + (group.role === 'staff' ? group._count._all : 0),
+        staff: result.staff + (group.role === 'admin' ? group._count._all : 0),
         passwordChangesRequired:
           result.passwordChangesRequired +
           (group.mustChangePassword ? group._count._all : 0),
@@ -96,7 +98,7 @@ export class AccountsService {
     limit: number,
     cursor?: string,
     search?: string,
-    role?: 'admin' | 'staff' | 'member',
+    role?: 'super_admin' | 'admin' | 'member',
     enabled?: boolean,
   ) {
     const users = await this.db.client.authUser.findMany({
@@ -113,7 +115,7 @@ export class AccountsService {
                 { name: { contains: search, mode: 'insensitive' as const } },
                 { phone: { contains: search } },
                 {
-                  role: { in: ['admin', 'staff'] },
+                  role: { in: ['super_admin', 'admin'] },
                   email: { contains: search, mode: 'insensitive' },
                 },
               ],
@@ -134,7 +136,7 @@ export class AccountsService {
       phone?: string;
       email?: string;
       temporaryPassword: string;
-      role: 'member' | 'staff';
+      role: 'member' | 'admin';
     },
   ) {
     await this.limit(actor.id);
@@ -275,11 +277,16 @@ export class AccountsService {
     const hash = await context.password.hash(temporaryPassword);
     await this.db.client.$transaction(
       async (tx) => {
-        await this.authorize(tx, actor, true, targetId);
+        const currentActor = await this.authorize(tx, actor, true, targetId);
         const target = await tx.authUser.findUnique({
           where: { id: targetId },
         });
         if (!target) throw new NotFoundException();
+        if (
+          target.role === 'super_admin' &&
+          currentActor.role !== 'super_admin'
+        )
+          throw new ForbiddenException('Super Admin account is protected');
         const credential = await tx.authAccount.findFirst({
           where: { userId: targetId, providerId: 'credential' },
         });
@@ -324,7 +331,7 @@ export class AccountsService {
     actor: Actor,
     targetId: string,
     enabled: boolean,
-    role: 'member' | 'staff',
+    role: 'member' | 'admin',
     reason: string,
   ) {
     await this.limit(actor.id);
@@ -332,7 +339,7 @@ export class AccountsService {
       await this.authorize(tx, actor, true, targetId);
       const target = await tx.authUser.findUnique({ where: { id: targetId } });
       if (!target) throw new NotFoundException();
-      if (target.role === 'admin' || targetId === actor.id)
+      if (target.role === 'super_admin' || targetId === actor.id)
         throw new ForbiddenException(
           'Cannot alter an Admin through this endpoint',
         );
@@ -340,7 +347,7 @@ export class AccountsService {
         target.role !== role &&
         ((role === 'member' &&
           (!target.phone || target.email !== phoneIdentity(target.phone))) ||
-          (role === 'staff' && !consoleEmail.safeParse(target.email).success))
+          (role === 'admin' && !consoleEmail.safeParse(target.email).success))
       )
         throw new ConflictException(
           'Changing this role requires migrating its sign-in identifier first.',

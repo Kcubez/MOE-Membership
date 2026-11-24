@@ -1,3 +1,4 @@
+import { SuperAdminGuard } from './roles.guard.js';
 import { Module } from '@nestjs/common';
 import { PrismaModule } from '../prisma/prisma.module.js';
 import { AuthController } from './auth.controller.js';
@@ -6,7 +7,7 @@ import { SessionGuard } from './session.guard.js';
 @Module({
   imports: [PrismaModule],
   controllers: [AuthController],
-  providers: [AuthService, SessionGuard],
-  exports: [SessionGuard, AuthService],
+  providers: [AuthService, SessionGuard, SuperAdminGuard],
+  exports: [SessionGuard, AuthService, SuperAdminGuard],
 })
 export class AuthModule {}

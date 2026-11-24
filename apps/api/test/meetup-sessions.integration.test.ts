@@ -61,14 +61,15 @@ test(
 
     try {
       const admin = await sign('Session Test Admin', '09791234565');
-      await pool.query("UPDATE moe_auth_user SET role='admin' WHERE id=$1", [
-        admin.body.user.id,
-      ]);
+      await pool.query(
+        "UPDATE moe_auth_user SET role='super_admin' WHERE id=$1",
+        [admin.body.user.id],
+      );
       const staff = await sign('Session Test Staff', '09791234566');
       const other = await sign('Other Test Staff', '09791234567');
       const member = await sign('Session Test Member', '09791234568');
       await pool.query(
-        "UPDATE moe_auth_user SET role='staff' WHERE id=ANY($1::text[])",
+        "UPDATE moe_auth_user SET role='admin' WHERE id=ANY($1::text[])",
         [[staff.body.user.id, other.body.user.id]],
       );
       const token = admin.body.token,
@@ -93,7 +94,7 @@ test(
           name: 'Session Test Plan',
           description: 'Test',
           benefits: 'Meetups',
-          totalVisits: 10,
+
           reason: 'Test setup',
         }).expect(200)
       ).body;
@@ -105,7 +106,9 @@ test(
         staffIds: [staff.body.user.id],
         reason: 'Create test meetup',
       };
-      await send('post', '/admin/sessions', input, staffToken).expect(403);
+      await send('post', '/admin/sessions', input, member.body.token).expect(
+        403,
+      );
       await send('post', '/admin/sessions', {
         ...input,
         meetupDate: '2026-02-30',
@@ -144,17 +147,17 @@ test(
       }).expect(200);
       assert.equal((await get('/sessions').expect(200)).body.items.length, 2);
       const assigned = (await get('/sessions', staffToken).expect(200)).body;
-      assert.equal(assigned.items.length, 1);
-      assert.equal(assigned.items[0].staff, undefined);
+      assert.equal(assigned.items.length, 2);
+      assert.ok(Array.isArray(assigned.items[0].staff));
       assert.equal(
         (await get('/sessions', otherToken).expect(200)).body.items.length,
-        0,
+        2,
       );
-      await get('/sessions/' + session.id, otherToken).expect(404);
+      await get('/sessions/' + session.id, otherToken).expect(200);
       const staffDetail = (
         await get('/sessions/' + session.id, staffToken).expect(200)
       ).body;
-      assert.equal(staffDetail.staff, undefined);
+      assert.ok(Array.isArray(staffDetail.staff));
       await get('/admin/sessions/' + session.id + '/audit', staffToken).expect(
         403,
       );
@@ -162,13 +165,13 @@ test(
         'put',
         '/admin/sessions/' + session.id + '/staff',
         { staffIds: [], version: 1, reason: 'Unauthorized' },
-        staffToken,
+        member.body.token,
       ).expect(403);
       await send(
         'patch',
         '/admin/sessions/' + session.id + '/state',
         { open: true, version: 1, reason: 'Unauthorized' },
-        staffToken,
+        member.body.token,
       ).expect(403);
       assert.equal(
         (await get('/sessions?open=true').expect(200)).body.items.length,
@@ -207,10 +210,10 @@ test(
         version: 2,
         reason: 'Hand over meetup',
       }).expect(200);
-      await get('/sessions/' + session.id, staffToken).expect(404);
+      await get('/sessions/' + session.id, staffToken).expect(200);
       assert.equal(
         (await get('/sessions', staffToken).expect(200)).body.items.length,
-        0,
+        2,
       );
       await get('/sessions/' + session.id, otherToken).expect(200);
       const race = await Promise.all([
@@ -301,7 +304,7 @@ test(
           name: 'Unused test plan',
           description: '',
           benefits: '',
-          totalVisits: 1,
+
           reason: 'Setup',
         }).expect(200)
       ).body;
@@ -319,7 +322,7 @@ test(
           name: 'Another plan',
           description: '',
           benefits: '',
-          totalVisits: 1,
+
           reason: 'Setup',
         }).expect(200)
       ).body;

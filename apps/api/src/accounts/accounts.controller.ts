@@ -71,7 +71,7 @@ export class AdminUsersController {
           limit: z.coerce.number().int().min(1).max(100).default(20),
           cursor: z.string().max(128).optional(),
           search: z.string().trim().max(120).optional(),
-          role: z.enum(['admin', 'staff', 'member']).optional(),
+          role: z.enum(['super_admin', 'admin', 'member']).optional(),
           enabled: z
             .enum(['true', 'false'])
             .optional()
@@ -105,7 +105,7 @@ export class AdminUsersController {
           phone: z.string().max(40).optional(),
           email: consoleEmail.optional(),
           temporaryPassword: password,
-          role: z.enum(['member', 'staff']),
+          role: z.enum(['member', 'admin']),
         })
         .strict()
         .refine((data) =>
@@ -153,7 +153,7 @@ export class AdminUsersController {
       z
         .object({
           enabled: z.boolean(),
-          role: z.enum(['member', 'staff']),
+          role: z.enum(['member', 'admin']),
           reason,
         })
         .strict(),

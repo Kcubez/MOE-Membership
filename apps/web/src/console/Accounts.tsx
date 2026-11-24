@@ -54,6 +54,14 @@ export function Accounts(props: Props) {
   const [refresh, setRefresh] = useState(0);
   const [action, setAction] = useState<Action>();
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setApplied(search.trim());
+      setPage(0);
+      setCursors([undefined]);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [search]);
+  useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
     setError('');
@@ -67,7 +75,9 @@ export function Accounts(props: Props) {
         },
         controller.signal,
       )
-      .then(setData)
+      .then((result) => {
+        if (!controller.signal.aborted) setData(result);
+      })
       .catch((error) => {
         if (!controller.signal.aborted) {
           setError(messageOf(error));
@@ -99,7 +109,7 @@ export function Accounts(props: Props) {
       <div className="c-page-heading">
         <div>
           <p className="c-eyebrow">MOE MEMBERSHIP SYSTEM</p>
-          <h1>{t('Users & staff')}</h1>
+          <h1>{t('Users & admins')}</h1>
           <p>{t('Manage accounts, roles and access in one place.')}</p>
         </div>
         <button
@@ -134,9 +144,13 @@ export function Accounts(props: Props) {
               }}
             >
               <option value="">{t('All roles')}</option>
-              {['member', 'staff', 'admin'].map((value) => (
+              {['member', 'admin', 'super_admin'].map((value) => (
                 <option key={value} value={value}>
-                  {t(value[0]!.toUpperCase() + value.slice(1))}
+                  {t(
+                    value === 'super_admin'
+                      ? 'Super Admin'
+                      : value[0]!.toUpperCase() + value.slice(1),
+                  )}
                 </option>
               ))}
             </Select>
@@ -245,18 +259,19 @@ export function Accounts(props: Props) {
                       <td>
                         <div className="c-row-actions">
                           <button
-                            className="c-icon-button bordered"
+                            className="c-button secondary small"
                             title={t('Regenerate QR')}
                             aria-label={`Regenerate QR for ${account.name}`}
                             onClick={() => setAction({ kind: 'qr', account })}
                           >
                             <IdCardIcon />
+                            {t('Regenerate QR')}
                           </button>
                           <button
-                            className="c-icon-button bordered"
-                            disabled={account.role === 'admin'}
+                            className="c-button secondary small"
+                            disabled={account.role === 'super_admin'}
                             title={
-                              account.role === 'admin'
+                              account.role === 'super_admin'
                                 ? 'Admin access is protected'
                                 : t('Edit access')
                             }
@@ -266,9 +281,14 @@ export function Accounts(props: Props) {
                             }
                           >
                             <Pencil1Icon />
+                            {t('Edit')}
                           </button>
                           <button
-                            className="c-icon-button bordered"
+                            className="c-button secondary small"
+                            disabled={
+                              account.role === 'super_admin' &&
+                              props.user.role !== 'super_admin'
+                            }
                             title={t('Reset password')}
                             aria-label={`Reset password for ${account.name}`}
                             onClick={() =>
@@ -276,6 +296,7 @@ export function Accounts(props: Props) {
                             }
                           >
                             <LockClosedIcon />
+                            {t('Reset password')}
                           </button>
                         </div>
                       </td>
@@ -340,11 +361,12 @@ export function Accounts(props: Props) {
       </section>
       <p className="c-footnote">
         {t(
-          'Changes to access or passwords revoke existing sessions. Every change requires a reason.',
+          'Changes to access or passwords revoke existing events. Every change requires a reason.',
         )}
       </p>
       {action?.kind === 'qr' ? (
         <RegenerateQrDialog
+          canAudit={props.user.role === 'super_admin'}
           account={action.account}
           onClose={() => setAction(undefined)}
           onDone={changed}
@@ -385,8 +407,8 @@ function AccountDialog({
   const target = 'account' in action ? action.account : undefined;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [role, setRole] = useState<'member' | 'staff'>(
-    target?.role === 'staff' ? 'staff' : 'member',
+  const [role, setRole] = useState<'member' | 'admin'>(
+    target?.role === 'admin' ? 'admin' : 'member',
   );
   const [enabled, setEnabled] = useState(target?.enabled ?? true);
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -399,7 +421,7 @@ function AccountDialog({
       if (action.kind === 'create') {
         const result = await consoleApi.create({
           name: String(form.get('name') || '').trim(),
-          ...(role === 'staff'
+          ...(role === 'admin'
             ? { email: String(form.get('email') || '').trim() }
             : { phone: String(form.get('phone') || '').trim() }),
           temporaryPassword: String(form.get('password') || ''),
@@ -424,10 +446,10 @@ function AccountDialog({
           onSignedOut(
             'Password reset. Sign in with the new temporary password.',
           );
-        else onDone('Password reset. Previous sessions were revoked.');
+        else onDone('Password reset. Previous events were revoked.');
       } else {
         await consoleApi.access(action.account.id, enabled, role, reason);
-        onDone('Account access updated. Previous sessions were revoked.');
+        onDone('Account access updated. Previous events were revoked.');
       }
     } catch (error) {
       setError(messageOf(error));
@@ -448,7 +470,7 @@ function AccountDialog({
       <p className="c-subtitle">
         {target
           ? `${target.name} · ${(target.role === 'member' ? target.phone : target.email) ?? ''}`
-          : t('Create a member or staff account.')}
+          : t('Create a member or admin account.')}
       </p>
       <form className="c-form" onSubmit={submit}>
         {action.kind !== 'reset' && (
@@ -457,10 +479,10 @@ function AccountDialog({
             <Select
               aria-label={t('Role')}
               value={role}
-              onValueChange={(value) => setRole(value as 'member' | 'staff')}
+              onValueChange={(value) => setRole(value as 'member' | 'admin')}
             >
               <option value="member">{t('Member')}</option>
-              <option value="staff">{t('Staff')}</option>
+              <option value="admin">{t('Admin')}</option>
             </Select>
           </label>
         )}
@@ -476,7 +498,7 @@ function AccountDialog({
                 autoComplete="off"
               />
             </label>
-            {role === 'staff' ? (
+            {role === 'admin' ? (
               <label>
                 {t('Email address')}
                 <input
