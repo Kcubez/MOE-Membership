@@ -286,20 +286,18 @@ export function Scanner({ onAuthError }: Pick<CatalogProps, 'onAuthError'>) {
       <div className="c-scanner-grid">
         <section className="c-panel c-scanner-panel">
           <label>
-            {t('Find a event')}
-            <input
-              type="search"
-              value={search}
-              disabled={busy || !!pending || camera || starting || decoding}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </label>
-          <label>
             {t('Event')}
             <Select
               aria-label={t('Event')}
               value={selected}
-              disabled={loading || busy || !!pending || starting || decoding}
+              disabled={busy || !!pending || camera || starting || decoding}
+              loading={loading}
+              searchValue={search}
+              onSearchChange={(next) => {
+                setSearch(next);
+                setSelected('');
+                setResult(undefined);
+              }}
               onValueChange={(value) => {
                 stopCamera();
                 setSelected(value);
@@ -308,7 +306,7 @@ export function Scanner({ onAuthError }: Pick<CatalogProps, 'onAuthError'>) {
               }}
             >
               <option value="">
-                {t(loading ? 'Loading events…' : 'Select a event')}
+                {t(loading ? 'Loading events…' : 'Select an event')}
               </option>
               {sessions.map((item) => (
                 <option key={item.id} value={item.id}>

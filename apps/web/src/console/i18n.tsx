@@ -190,7 +190,7 @@ const my: Record<string, string> = {
   'Camera is off': 'ကင်မရာ ပိတ်ထားသည်',
   'Camera preview': 'ကင်မရာ မြင်ကွင်း',
   'Refresh events': 'တွေ့ဆုံပွဲများ ပြန်ယူမည်',
-  'Select a event': 'တွေ့ဆုံပွဲ ရွေးပါ',
+  'Select an event': 'တွေ့ဆုံပွဲ ရွေးပါ',
   'Loading events…': 'တွေ့ဆုံပွဲများ ရယူနေသည်…',
   Event: 'တွေ့ဆုံပွဲ',
   'Find a event': 'တွေ့ဆုံပွဲ ရှာရန်',
