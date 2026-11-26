@@ -2,6 +2,7 @@ import { createContext, useContext } from 'react';
 export type Language = 'en' | 'my';
 export const LanguageContext = createContext<Language>('en');
 const my: Record<string, string> = {
+  'No results found.': 'ရှာဖွေမှုနှင့် ကိုက်ညီသည့်အချက်အလက် မတွေ့ပါ။',
   'Phone number or email': 'ဖုန်းနံပါတ် သို့မဟုတ် အီးမေးလ်',
   'Sign in with your phone number or email and password.':
     'ဖုန်းနံပါတ် သို့မဟုတ် အီးမေးလ်နှင့် စကားဝှက်ဖြင့် ဝင်ပါ။',

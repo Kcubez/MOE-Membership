@@ -1,3 +1,4 @@
+import { SearchableSelect } from './SearchableSelect';
 import * as Primitive from '@radix-ui/react-select';
 import {
   CheckIcon,
@@ -20,6 +21,10 @@ type OptionProps = {
   disabled?: boolean;
 };
 type Props = {
+  onLoadMore?: () => void;
+  searchValue?: string;
+  onSearchChange?: (value: string) => void;
+  loading?: boolean;
   children: ReactNode;
   value?: string;
   defaultValue?: string;
@@ -34,6 +39,10 @@ type Props = {
 };
 export function Select({
   children,
+  onLoadMore,
+  searchValue,
+  onSearchChange,
+  loading,
   value,
   defaultValue,
   onValueChange,
@@ -75,6 +84,27 @@ export function Select({
     trigger.current = node;
     setContainer(node?.closest('dialog') ?? undefined);
   }, []);
+  if (onSearchChange)
+    return (
+      <SearchableSelect
+        onLoadMore={onLoadMore}
+        options={options}
+        value={selected}
+        onValueChange={(next) => {
+          setInternal(next);
+          onValueChange?.(next);
+        }}
+        searchValue={searchValue ?? ''}
+        onSearchChange={onSearchChange}
+        loading={loading}
+        disabled={disabled}
+        required={required}
+        name={name}
+        id={id}
+        className={className}
+        {...aria}
+      />
+    );
   return (
     <Primitive.Root
       value={selected}

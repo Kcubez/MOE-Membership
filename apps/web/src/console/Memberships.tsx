@@ -368,24 +368,17 @@ function UserPicker({
   return (
     <div className="c-user-picker">
       <label>
-        {t('Find an account')}
-        <input
-          type="search"
-          value={search}
-          placeholder={t('Name or phone number')}
-          onChange={(event) => {
-            setSearch(event.target.value);
-            onChange('');
-          }}
-        />
-      </label>
-      <label>
         {t('Member')}
         <Select
           aria-label={t('Member')}
           required
           value={value}
-          disabled={loading}
+          searchValue={search}
+          onSearchChange={(next) => {
+            setSearch(next);
+            onChange('');
+          }}
+          loading={loading}
           onValueChange={(value) => onChange(value)}
         >
           <option value="">
@@ -545,25 +538,18 @@ function MembershipDialog({
               onError={onAuthError}
             />
             <label>
-              {t('Find a program')}
-              <input
-                type="search"
-                value={planSearch}
-                placeholder={t('Program name')}
-                onChange={(event) => {
-                  setPlanSearch(event.target.value);
-                  setPlanId('');
-                }}
-              />
-            </label>
-            <label>
               {t('Program')}
               <Select
                 aria-label={t('Program')}
                 value={planId}
                 onValueChange={(value) => setPlanId(value)}
                 required
-                disabled={loading}
+                searchValue={planSearch}
+                onSearchChange={(next) => {
+                  setPlanSearch(next);
+                  setPlanId('');
+                }}
+                loading={loading}
               >
                 <option value="">
                   {t(

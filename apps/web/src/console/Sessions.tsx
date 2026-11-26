@@ -377,79 +377,86 @@ function StaffPicker({
       <legend>
         {t('Assigned admin')} ({ids.length})
       </legend>
-      <label>
-        {t('Find admin')}
-        <input
-          type="search"
-          placeholder={t('Name or phone number')}
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-        />
-      </label>
-      {error && (
-        <>
-          <Alert>{error}</Alert>
-          <button
-            className="c-button secondary small"
-            type="button"
-            disabled={loading}
-            onClick={() => setRetry((value) => value + 1)}
-          >
-            {t('Retry')}
-          </button>
-        </>
-      )}
-      <div className="c-staff-options">
-        {items.map((staff) => (
-          <label className="c-check-option" key={staff.id}>
+      <details className="c-admin-combobox">
+        <summary className="c-select">
+          {t('Assigned admin')} ({ids.length})
+        </summary>
+        <div className="c-combobox-menu">
+          <label>
+            {t('Find admin')}
             <input
-              type="checkbox"
-              checked={ids.includes(staff.id)}
-              disabled={loading}
-              onChange={(event) =>
-                onChange(
-                  event.target.checked
-                    ? [...ids, staff.id]
-                    : ids.filter((id) => id !== staff.id),
-                )
-              }
+              type="search"
+              placeholder={t('Search by name, email or phone')}
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
             />
-            <span>
-              {staff.name}
-              <small>{staff.email}</small>
-            </span>
           </label>
-        ))}
-      </div>
-      {loading ? (
-        <InlineLoading label="Loading admin…" />
-      ) : !items.length ? (
-        <p>{t('No enabled admin found')}</p>
-      ) : null}
-      {cursor && (
-        <button
-          className="c-button secondary small"
-          type="button"
-          disabled={loading}
-          onClick={() => void more()}
-        >
-          <BusyLabel busy={loading} active="Loading admin…">
-            {t('Load more admin')}
-          </BusyLabel>
-        </button>
-      )}
-      <small>
-        {t(
-          'Selections are retained while searching. Use Clear admin to remove all assignments.',
-        )}
-      </small>
-      <button
-        type="button"
-        className="c-button secondary small"
-        onClick={() => onChange([])}
-      >
-        {t('Clear admin')}
-      </button>
+          {error && (
+            <>
+              <Alert>{error}</Alert>
+              <button
+                className="c-button secondary small"
+                type="button"
+                disabled={loading}
+                onClick={() => setRetry((value) => value + 1)}
+              >
+                {t('Retry')}
+              </button>
+            </>
+          )}
+          <div className="c-staff-options">
+            {items.map((staff) => (
+              <label className="c-check-option" key={staff.id}>
+                <input
+                  type="checkbox"
+                  checked={ids.includes(staff.id)}
+                  disabled={loading}
+                  onChange={(event) =>
+                    onChange(
+                      event.target.checked
+                        ? [...ids, staff.id]
+                        : ids.filter((id) => id !== staff.id),
+                    )
+                  }
+                />
+                <span>
+                  {staff.name}
+                  <small>{staff.email}</small>
+                </span>
+              </label>
+            ))}
+          </div>
+          {loading ? (
+            <InlineLoading label="Loading admin…" />
+          ) : !items.length ? (
+            <p>{t('No enabled admin found')}</p>
+          ) : null}
+          {cursor && (
+            <button
+              className="c-button secondary small"
+              type="button"
+              disabled={loading}
+              onClick={() => void more()}
+            >
+              <BusyLabel busy={loading} active="Loading admin…">
+                {t('Load more admin')}
+              </BusyLabel>
+            </button>
+          )}
+          <small>
+            {t(
+              'Selections are retained while searching. Use Clear admin to remove all assignments.',
+            )}
+          </small>
+          <button
+            type="button"
+            className="c-button secondary small"
+            onClick={() => onChange([])}
+          >
+            {t('Clear admin')}
+          </button>
+        </div>
+      </details>
     </fieldset>
   );
 }
@@ -554,22 +561,16 @@ function SessionDialog({
               <input name="name" required maxLength={120} autoFocus />
             </label>
             <label>
-              {t('Find a program')}
-              <input
-                type="search"
-                value={search}
-                onChange={(event) => {
-                  setSearch(event.target.value);
-                  setPlanId('');
-                }}
-              />
-            </label>
-            <label>
               {t('Program')}
               <Select
                 aria-label={t('Program')}
                 required
-                disabled={loading}
+                searchValue={search}
+                onSearchChange={(next) => {
+                  setSearch(next);
+                  setPlanId('');
+                }}
+                loading={loading}
                 value={planId}
                 onValueChange={(value) => setPlanId(value)}
               >

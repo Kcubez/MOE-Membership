@@ -264,39 +264,16 @@ export function Backfill({
               />
             </label>
             <label>
-              {t('Search events')}
-              <input
-                value={sessionSearch}
-                onChange={(e) => setSessionSearch(e.target.value)}
-                maxLength={120}
-              />
-            </label>
-            <div>
-              <button
-                type="button"
-                className="c-button secondary"
-                onClick={() => {
-                  setSessionApplied(sessionSearch.trim());
-                  setSessionCursor(undefined);
-                }}
-              >
-                {t('Find events')}
-              </button>{' '}
-              <button
-                type="button"
-                className="c-button secondary"
-                disabled={!sessionNext || loadingSessions}
-                onClick={() => setSessionCursor(sessionNext!)}
-              >
-                {t('More events')}
-              </button>
-            </div>
-            <label>
               {t('Event')}
               <Select
                 aria-label={t('Event')}
                 required
-                disabled={loadingSessions}
+                onLoadMore={
+                  sessionNext ? () => setSessionCursor(sessionNext) : undefined
+                }
+                searchValue={sessionSearch}
+                onSearchChange={setSessionSearch}
+                loading={loadingSessions}
                 value={sessionId}
                 onValueChange={(value) => setSessionId(value)}
               >
@@ -316,39 +293,16 @@ export function Backfill({
               </p>
             )}
             <label>
-              {t('Search accounts')}
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                maxLength={120}
-              />
-            </label>
-            <div>
-              <button
-                type="button"
-                className="c-button secondary"
-                onClick={() => {
-                  setApplied(search.trim());
-                  setUserCursor(undefined);
-                }}
-              >
-                {t('Find accounts')}
-              </button>{' '}
-              <button
-                type="button"
-                className="c-button secondary"
-                disabled={!userNext || loadingUsers}
-                onClick={() => setUserCursor(userNext!)}
-              >
-                {t('More accounts')}
-              </button>
-            </div>
-            <label>
               {t('Member')}
               <Select
                 aria-label={t('Member')}
                 required
-                disabled={loadingUsers}
+                onLoadMore={
+                  userNext ? () => setUserCursor(userNext) : undefined
+                }
+                searchValue={search}
+                onSearchChange={setSearch}
+                loading={loadingUsers}
                 value={userId}
                 onValueChange={(value) => setUserId(value)}
               >

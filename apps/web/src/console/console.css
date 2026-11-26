@@ -2393,3 +2393,43 @@ html[lang='my'] .c-table {
     min-height: 40px;
   }
 }
+.c-combobox {
+  position: relative;
+  min-width: 0;
+}
+.c-combobox-validation {
+  position: absolute;
+  width: 1px !important;
+  height: 1px;
+  min-height: 0 !important;
+  padding: 0 !important;
+  opacity: 0;
+  pointer-events: none;
+}
+.c-combobox-menu {
+  position: relative;
+  margin-top: 6px;
+  padding: 8px;
+  border: 1px solid var(--c-line);
+  border-radius: 9px;
+  background: white;
+  box-shadow: 0 6px 20px #17203312;
+}
+.c-combobox-options {
+  max-height: 220px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  margin-top: 6px;
+}
+.c-combobox-options > p {
+  padding: 12px;
+  font-size: 12px;
+}
+.c-combobox-options .is-highlighted {
+  background: var(--c-soft);
+}
+.c-combobox-options .c-select-option {
+  justify-content: space-between;
+  gap: 8px;
+  padding-right: 10px;
+}
